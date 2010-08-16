@@ -12,7 +12,7 @@ def system_cmd_fail(cmd):
     print cmd
     res = os.system(cmd)
     if res != 0:
-        raise Exception('Command "%s" failed. (ret value: %s)' %(cmd, res))
+        raise Exception('Command "%s" failed. (ret value: %s)' % (cmd, res))
 
 def system_output(cmd):
     ''' Gets the output of a command. '''
@@ -27,9 +27,6 @@ class Resource:
         
     def is_downloaded(self):
         return os.path.exists(self.destination)
-
-    def install(self):
-        pass
         
     def __str__(self):
         return self.destination
@@ -41,7 +38,7 @@ class Resource:
         pass
 
     def current_revision(self):
-	return None
+        return None
 
     def something_to_commit(self):
         return False
@@ -68,6 +65,7 @@ class Resource:
         else:
             raise Exception('Uknown install type "%s".' % install_type)
         
+        
 class Subversion(Resource):
     def __init__(self, config):
         Resource.__init__(self, config)
@@ -89,6 +87,7 @@ class Subversion(Resource):
         out = system_output('svnversion %s' % self.destination)
         out = out.split()[0]
         return out
+
 
 class Git(Resource):
     def __init__(self, config):
@@ -118,7 +117,7 @@ class Git(Resource):
     
 def expand_environment(s):
     while True:
-        m =  re.match('(.*)\$\{(\w+)\}(.*)', s)
+        m = re.match('(.*)\$\{(\w+)\}(.*)', s)
         if not m:
             return s
         before = m.group(1)
@@ -127,14 +126,8 @@ def expand_environment(s):
         if not var in os.environ:
             raise ValueError('Could not find environment variable "%s".' % var)
         sub = os.environ[var]
-        s = before+sub+after
-        #print 'Expanded to %s' % s
-#            
-#def expand(r):
-#    ''' Expand environment variables found. '''
-#    for k in r.keys():
-#        r[k] = expand_environment(r[k])
-#    return r
+        s = before + sub + after
+
 
 def instantiate(config):
     res_type = config['type']
@@ -150,8 +143,7 @@ def instantiate(config):
 def main():
     config = 'resources.yaml'
     resources = list(yaml.load_all(open(config)))
-    resources = filter( lambda x: x is not None, resources)
-#    resources = map(expand, resources)
+    resources = filter(lambda x: x is not None, resources)
     resources = map(instantiate, resources)
     
     
@@ -200,6 +192,6 @@ def main():
     else:
         raise Exception('Uknown command "%s".' % command)
         
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
        
