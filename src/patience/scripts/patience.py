@@ -2,15 +2,16 @@
 import yaml, os, re, sys
 import subprocess
 
-def system_cmd(cmd):
-    val = os.system(cmd)
+def system_cmd(cwd, cmd):
+    val = subprocess.call(cmd.split(), cwd=cwd)
     if val != 0:
-        print "%s: %s" % (val, cmd)
+        pass
+#        print "%s: %s : %s" % (val, cwd, cmd)
     return val
     
-def system_cmd_fail(cmd):
-    print cmd
-    res = os.system(cmd)
+def system_cmd_fail(cwd, cmd):
+
+    res = system_cmd(cwd,cmd)
     if res != 0:
         raise Exception('Command "%s" failed. (ret value: %s)' % (cmd, res))
 
@@ -54,12 +55,12 @@ class Resource:
             return
 
         if install_type == 'setuptools':
-            system_cmd_fail('cd %s && python setup.py develop' % self.destination)
+            system_cmd_fail(self.destination, 'python setup.py develop')
         elif install_type == 'cmake':
-            system_cmd_fail('cd %s && cmake -DCMAKE_INSTALL_PREFIX=${BVENV_PREFIX} .' % self.destination)
-            system_cmd_fail('cd %s && make' % self.destination)
+            system_cmd_fail(self.destination, 'cmake -DCMAKE_INSTALL_PREFIX=${BVENV_PREFIX} .')
+            system_cmd_fail(self.destination, 'make' )
             
-            system_cmd_fail('cd %s && make install' % self.destination)
+            system_cmd_fail(self.destination, 'make install')
             
             
         else:
@@ -72,16 +73,16 @@ class Subversion(Resource):
         self.url = config['url']
         
     def checkout(self):
-        system_cmd_fail('svn checkout %s %s' % (self.url, self.destination))
+        system_cmd_fail('.', 'svn checkout %s %s' % (self.url, self.destination))
 
     def update(self):
-        system_cmd_fail('svn update %s' % (self.destination))
+        system_cmd_fail(self.destination, 'svn update')
 
     def something_to_commit(self):
         return "" != system_output('svn status %s' % (self.destination))
 
     def commit(self):
-        system_cmd_fail('svn commit %s' % (self.destination))
+        system_cmd_fail(self.destination, 'svn commit' )
         
     def current_revision(self):
         out = system_output('svnversion %s' % self.destination)
@@ -96,19 +97,20 @@ class Git(Resource):
         self.branch = config.get('branch', 'master')
 
     def checkout(self):    
-        system_cmd_fail('git clone %s %s' % (self.url, self.destination))
+        system_cmd_fail('.', 'git clone %s %s' % (self.url, self.destination))
 
     def update(self):
     # XXX: branch :
         # system_cmd_fail('cd %s && git pull origin ' % (self.destination))
-        system_cmd_fail('cd %s && git pull origin master' % (self.destination))
+        system_cmd_fail(self.destination, 'git pull origin %s' % self.branch)
         
     def something_to_commit(self):
-        return 0 != system_cmd('cd %s && git diff --quiet --exit-code origin/%s' % (self.destination, self.branch))
+        return 0 != system_cmd(self.destination, 'git diff --quiet --exit-code origin/%s' % self.branch)
         
     def commit(self):
-        system_cmd_fail('cd %s && git commit -a' % (self.destination))
-        system_cmd_fail('cd %s && git push' % (self.destination))
+        if self.something_to_commit():
+            system_cmd_fail(self.destination, 'git commit -a' )
+        system_cmd_fail(self.destination, 'git push')
         
     def current_revision(self):
         out = system_output('cd %s && git rev-parse HEAD' % self.destination)    
