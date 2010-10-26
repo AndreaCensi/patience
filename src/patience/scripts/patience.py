@@ -6,7 +6,7 @@ def system_cmd(cwd, cmd):
     val = subprocess.call(cmd.split(), cwd=cwd)
     if val != 0:
         pass
-#        print "%s: %s : %s" % (val, cwd, cmd)
+        print "%s: %s : %s" % (val, cwd, cmd)
     return val
     
 def system_cmd_fail(cwd, cmd):
