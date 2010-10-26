@@ -102,6 +102,7 @@ class Git(Resource):
     def update(self):
     # XXX: branch :
         # system_cmd_fail('cd %s && git pull origin ' % (self.destination))
+        system_cmd_fail(self.destination, 'git fetch')
         system_cmd_fail(self.destination, 'git pull origin %s' % self.branch)
         
     def something_to_commit(self):
