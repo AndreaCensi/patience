@@ -100,8 +100,6 @@ class Git(Resource):
         system_cmd_fail('.', 'git clone %s %s' % (self.url, self.destination))
 
     def update(self):
-    # XXX: branch :
-        # system_cmd_fail('cd %s && git pull origin ' % (self.destination))
         system_cmd_fail(self.destination, 'git fetch')
         system_cmd_fail(self.destination, 'git pull origin %s' % self.branch)
         
