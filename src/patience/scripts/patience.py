@@ -6,7 +6,7 @@ def system_cmd(cwd, cmd):
     val = subprocess.call(cmd.split(), cwd=cwd)
     if val != 0:
         pass
-        print "%s: %s : %s" % (val, cwd, cmd)
+        # print "%s: %s : %s" % (val, cwd, cmd)
     return val
     
 def system_cmd_fail(cwd, cmd):
@@ -141,8 +141,22 @@ def instantiate(config):
     else:
         raise Exception('Uknown resource type "%s".' % res_type)
 
+def find_configuration(dir=os.path.curdir, name='resources.yaml'):
+    while True:
+        dir = os.path.realpath(dir)
+        config = os.path.join(dir, name) 
+        if os.path.exists(config):
+            return config
+        
+        parent  = os.path.dirname(dir)
+        if parent == dir: # reached /
+            raise Exception('Could not find configuration "%s".' % name)
+        
+        dir = parent
+        
+
 def main():
-    config = 'resources.yaml'
+    config = find_configuration()
     resources = list(yaml.load_all(open(config)))
     resources = filter(lambda x: x is not None, resources)
     resources = map(instantiate, resources)
