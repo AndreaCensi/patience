@@ -104,6 +104,7 @@ class Git(Resource):
         system_cmd_fail(self.destination, 'git pull origin %s' % self.branch)
         
     def something_to_commit(self):
+        # this assumes we are in the right branch
         return 0 != system_cmd(self.destination, 'git diff --quiet --exit-code origin/%s' % self.branch)
         
     def commit(self):
