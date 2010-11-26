@@ -69,6 +69,9 @@ def main():
         raise Exception('Please provide command.')
     command = sys.argv[1]
     
+    
+    quiet = False
+
 
     if command == 'checkout':
         for r in resources:
@@ -82,15 +85,14 @@ def main():
         for r in resources:
         
             if r.config['type'] == 'git':
-                print 'Fetching for %s' % r
+                if not quiet:
+                    print 'Fetching for %s' % r
                 res = r.fetch()
                 if res:  
                     print "fetched {dir}".format(dir=r)
                 
     elif command == 'pfetch':
 
-        quiet = False
-        
         from multiprocessing import Pool, TimeoutError
         pool = Pool(processes=10)            
         
@@ -114,6 +116,9 @@ def main():
                      
     elif command == 'update':
         for r in resources:
+            if not quiet:
+                print 'Updating %s' % r
+
             r.update()
 
     elif command == 'install':
@@ -125,12 +130,21 @@ def main():
             if not r.is_downloaded():
                 raise Exception('Could not verify status of "%s" before download.' % r)
             to_commit = r.something_to_commit()
-            to_push = r.something_to_push()
+            to_push = r.branches_are_different()
 #           to_pull = r.something_to_pull()
             
             if to_commit or to_push:
                 s1 = "commit" if to_commit else ""
-                s2 = "merge" if to_push else ""
+                if not to_push:
+                    s2 = ""
+                else:
+                    if r.something_to_push():
+                        s2 = 'push'
+                    else:
+                        if r.can_be_ff():
+                            s2 = "ff"
+                        else:
+                            s2 = "merge" 
                 
                 print "{s1:>8} {s2:>8}  {dir}".format(s1=s1,s2=s2,dir=r)
             else:
