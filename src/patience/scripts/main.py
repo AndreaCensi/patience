@@ -4,25 +4,15 @@ import subprocess
 
 from patience.subversion import *
 from patience.git import *
-
-        # 
-        # def expand_environment(s):
-        #     while True:
-        #         m = re.match('(.*)\$\{(\w+)\}(.*)', s)
-        #         if not m:
-        #             return s
-        #         before = m.group(1)
-        #         var = m.group(2)
-        #         after = m.group(3)
-        #         if not var in os.environ:
-        #             raise ValueError('Could not find environment variable "%s".' % var)
-        #         sub = os.environ[var]
-        #         s = before + sub + after
+ 
 
 
-def instantiate(config):
+def instantiate(config, base_dir='.'):
     if not all([x in config for x in ['url', 'destination']]):
         raise Exception('Incomplete config: %s' % config)
+    
+    config['destination'] = os.path.expanduser(os.path.expandvars(config['destination']))
+    config['destination']  = os.path.normpath( os.path.join(base_dir, config['destination']) )
     
     if not 'type' in config:
         url = config['url']
@@ -73,7 +63,7 @@ def main():
         
     resources = list(yaml.load_all(open(config)))
     resources = filter(lambda x: x is not None, resources)
-    resources = map(instantiate, resources)
+    resources = [instantiate(x, base_dir=os.path.dirname(config)) for x in resources]
     
     
     if len(args) == 0:

@@ -3,9 +3,8 @@ import os
 class Resource: 
     def __init__(self, config):
         self.config = config
-        self.destination_orig = config['destination']
-        self.destination = os.path.expanduser(os.path.expandvars(self.destination_orig))
-    
+        self.destination = config['destination']
+        
     def is_downloaded(self):
         return os.path.exists(self.destination)
     
