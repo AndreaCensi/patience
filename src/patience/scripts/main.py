@@ -155,13 +155,17 @@ def main():
             flags = [''] * 4
             
             if num_modified or num_untracked:
-                fm = '%2dm' % num_modified if num_modified else "   "
-                fu = '%2du' % num_untracked if num_untracked else "   "
+                fm = '%3dm' % num_modified if num_modified else "    "
+                if num_modified > 99:
+                    fm = '>99u'
+                fu = '%3du' % num_untracked if num_untracked else "    "
+                if num_untracked > 99:
+                    fu = '>99u'
                 
                 flags[0] = fm +' '+ fu
                 
             if to_pull:
-                flags[1] = 'pull'
+                flags[1] = 'merge'
                 if not r.simple_merge():
                     flags[1] += ' (!)'
                 else:
