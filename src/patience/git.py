@@ -39,6 +39,18 @@ class Git(Resource):
         return 0 != system_cmd(self.destination, command) 
     
     def something_to_push(self):
+        command = 'git push --dry-run --porcelain'
+        output = system_output(self.destination, command)
+
+        # XXX, use instead
+        # http://stackoverflow.com/questions/2176278/preview-a-git-push
+        if not '=' in output.split('\n \t'):
+            return True
+        else:
+            return False
+            
+        
+    def branches_are_different(self):
         command = 'git diff --exit-code --quiet origin/%s %s' % (self.branch, self.branch)
         return 0 != system_cmd(self.destination, command) 
 
