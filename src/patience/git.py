@@ -31,10 +31,6 @@ class Git(Resource):
             else:
                 print "%s: Will not merge, because more than a FF is required." % self
 
-    def dirty(self):
-        command = 'git diff --exit-code --quiet'
-        return 0 != system_cmd(self.destination, command) 
-        
     def num_modified(self):
         command = 'git ls-files -m -d'
         output = system_output(self.destination, command)
@@ -48,30 +44,26 @@ class Git(Resource):
         return len(files)
     
     def something_to_push(self):
+        ''' Returns the number of commits that we can push to the remote branch.'''
         b1 = 'origin/%s' % self.branch
         b2 = self.branch
-        command = 'git log {0}..{1} --no-merges'.format(b1,b2)
+        command = 'git log {0}..{1} --no-merges --pretty=oneline'.format(b1,b2)
         output = system_output(self.destination, command)
-        if output:
-            return True
-        else:
-            return False
+        commits = output.split('\n') if output else []
+        return len(commits)
 
     def something_to_pull(self):
+        ''' Returns the number of commits that we can merge from remote branch.'''
         b1 = self.branch
         b2 = 'origin/%s' % self.branch
-        command = 'git log {0}..{1} --no-merges'.format(b1,b2)
-#        command = 'git log %s..FETCH_HEAD --no-merges' % self.branch
+        command = 'git log {0}..{1} --no-merges --pretty=oneline'.format(b1,b2)
         output = system_output(self.destination, command)
-        if output:
-            return True
-        else:
-            return False
+        commits = output.split('\n') if output else []
+        return len(commits)
     
     def simple_merge(self):
-        ''' check that it can be FF''' 
-        rev = system_output(self.destination, 'git rev-parse %s' %
-                            self.branch).strip()
+        ''' Checks that our branch can be fast forwarded. ''' 
+        rev = system_output(self.destination, 'git rev-parse %s' % self.branch).strip()
         base = system_output(self.destination, 
             'git merge-base %s origin/%s' % (rev, self.branch)).strip()
         if rev == base:
@@ -80,24 +72,17 @@ class Git(Resource):
             return False
     
     def simple_push(self):
-        stdout = system_output(self.destination,    
-          'git rev-list {branch}..origin/{branch}'.format(branch=self.branch))
-        if stdout:
+        ''' Returns true if we can do a safe push (assuming we have the last
+            revision of the remote branch.) '''
+        command = 'git rev-list {branch}..origin/{branch}'.format(branch=self.branch)
+        stdout = system_output(self.destination, command)
+        if stdout.strip():
             return False
         else:
             return True
-
-    
-    # def branches_are_different(self):
-    #     command = 'git diff --exit-code --quiet origin/%s %s' % (self.branch, self.branch)
-    #     return 0 != system_cmd(self.destination, command) 
-
-    def something_to_commit(self):
-        return self.dirty()
-    
     
     def commit(self):
-        if self.something_to_commit():
+        if self.num_modified():
             n = self.num_untracked()
             if n >0 :
                 print "%s: cannot commit; there are %s untracked files." % (self, n)

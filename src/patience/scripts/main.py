@@ -152,7 +152,7 @@ def main():
             to_push = r.something_to_push()
             to_pull = r.something_to_pull()
 
-            flags = [''] * 4
+            flags = [''] * 3
             
             if num_modified or num_untracked:
                 fm = '%3dm' % num_modified if num_modified else "    "
@@ -165,28 +165,23 @@ def main():
                 flags[0] = fm +' '+ fu
                 
             if to_pull:
-                flags[1] = 'merge'
+                flags[1] = 'merge (%d)' % to_pull
                 if not r.simple_merge():
                     flags[1] += ' (!)'
                 else:
                     flags[1] += '    '            
 
             if to_push:
-                flags[2] = 'push'
+                flags[2] = 'push (%d)' % to_push
                 if not r.simple_push():
                     flags[2] += ' (!)'
                 else:
-                    flags[2] += '    '            
-            # if to_push or to_pull:
-            #     if ff:
-            #         flags[3] = 'ok'
-            #     else:
-            #         flags[3] = 'X'
+                    flags[2] += '    '         
             
             if not all([f == '' for f in flags]):
                 status = ""
                 for f in flags:
-                    status += '{0:>10}'.format(f)
+                    status += '{0:>15}'.format(f)
                 status += " {0}".format(r)
 
                 print status
