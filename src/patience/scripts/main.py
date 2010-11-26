@@ -205,7 +205,7 @@ def main():
 
     elif command == 'commit':
         for r in resources:
-            if r.something_to_commit():
+            if r.num_modified()>0 and  r.num_untracked() == 0:
                 r.commit()
     else:
         raise Exception('Unknown command "%s".' % command)

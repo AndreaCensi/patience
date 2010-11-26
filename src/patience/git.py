@@ -88,9 +88,9 @@ class Git(Resource):
             return True
 
     
-    def branches_are_different(self):
-        command = 'git diff --exit-code --quiet origin/%s %s' % (self.branch, self.branch)
-        return 0 != system_cmd(self.destination, command) 
+    # def branches_are_different(self):
+    #     command = 'git diff --exit-code --quiet origin/%s %s' % (self.branch, self.branch)
+    #     return 0 != system_cmd(self.destination, command) 
 
     def something_to_commit(self):
         return self.dirty()
