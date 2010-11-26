@@ -94,7 +94,7 @@ class Git(Resource):
                 except Exception as e:
                     print e
                     return
-                system_cmd_fail(self.destination, 'git commit -a -m "%s"' % msg )
+                system_cmd_fail(self.destination, ['git', 'commit', '-a', '-m', msg] )
     
     def push(self):
         if self.simple_push():
