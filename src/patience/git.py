@@ -28,11 +28,14 @@ class Git(Resource):
     def update(self):
         system_cmd_fail(self.destination, 'git fetch')
 
-        if self.can_be_ff():
-            system_cmd_fail(self.destination, 'git merge origin/%s %s' % 
-                (self.branch, self.branch))
-        else:
-            print "%s: Will not merge, because more than a FF is required." % r
+        if self.something_to_pull():
+            if self.can_be_ff():
+                print "%s: merging" % self
+            
+                system_cmd_fail(self.destination, 'git merge origin/%s %s' % 
+                    (self.branch, self.branch))
+            else:
+                print "%s: Will not merge, because more than a FF is required." % self
 
     def dirty(self):
         command = 'git diff --exit-code --quiet'

@@ -190,10 +190,10 @@ def main():
         
     elif command == 'push':
         for r in resources:
-            if not quiet:
-                print 'Fetching for %s' % r
-            
             if r.something_to_push() and r.can_be_ff():
+                if not quiet:
+                     print 'Fetching for %s' % r
+
                 r.push()
 
     elif command == 'commit':
