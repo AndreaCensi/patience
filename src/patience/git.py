@@ -17,21 +17,15 @@ class Git(Resource):
         else:
             return False
             
-    def can_be_ff(self):
-        stdout = system_output(self.destination,    
-          'git rev-list {branch}..origin/{branch}'.format(branch=self.branch))
-        if stdout:
-            return False
-        else:
-            return True
-            
     def update(self):
         system_cmd_fail(self.destination, 'git fetch')
+        self.merge()
 
+    def merge(self):
         if self.something_to_pull():
-            if self.can_be_ff():
+            if self.simple_merge():
                 print "%s: merging" % self
-            
+
                 system_cmd_fail(self.destination, 'git merge origin/%s %s' % 
                     (self.branch, self.branch))
             else:
@@ -73,8 +67,27 @@ class Git(Resource):
             return True
         else:
             return False
-            
-        
+    
+    def simple_merge(self):
+        ''' check that it can be FF''' 
+        rev = system_output(self.destination, 'git rev-parse %s' %
+                            self.branch).strip()
+        base = system_output(self.destination, 
+            'git merge-base %s origin/%s' % (rev, self.branch)).strip()
+        if rev == base:
+            return True
+        else:
+            return False
+    
+    def simple_push(self):
+        stdout = system_output(self.destination,    
+          'git rev-list {branch}..origin/{branch}'.format(branch=self.branch))
+        if stdout:
+            return False
+        else:
+            return True
+
+    
     def branches_are_different(self):
         command = 'git diff --exit-code --quiet origin/%s %s' % (self.branch, self.branch)
         return 0 != system_cmd(self.destination, command) 
@@ -98,7 +111,7 @@ class Git(Resource):
                     print "OK, will not do it"
     
     def push(self):
-        if self.can_be_ff():
+        if self.simple_push():
             system_cmd_fail(self.destination, 'git push')
         else:
             print "%s: cannot push because of conflicts" % self

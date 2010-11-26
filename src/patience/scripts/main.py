@@ -94,6 +94,11 @@ def main():
             else:
                 print 'Already downloaded %s.' % r 
                 
+    elif command == 'merge':
+        for r in resources:
+            if r.something_to_pull() and r.simple_merge():
+                r.merge()
+                
     elif command == 'fetch':
         for r in resources:
         
@@ -146,11 +151,7 @@ def main():
             num_untracked = r.num_untracked()
             to_push = r.something_to_push()
             to_pull = r.something_to_pull()
-            if to_push or to_pull:
-               ff = r.can_be_ff()
-            else:
-               ff = False
-            
+
             flags = [''] * 4
             
             if num_modified or num_untracked:
@@ -161,21 +162,27 @@ def main():
                 
             if to_pull:
                 flags[1] = 'pull'
+                if not r.simple_merge():
+                    flags[1] += ' (!)'
+                else:
+                    flags[1] += '    '            
 
             if to_push:
                 flags[2] = 'push'
-            
-            if to_push or to_pull:
-            
-                if ff:
-                    flags[3] = 'ok'
+                if not r.simple_push():
+                    flags[2] += ' (!)'
                 else:
-                    flags[3] = 'X'
+                    flags[2] += '    '            
+            # if to_push or to_pull:
+            #     if ff:
+            #         flags[3] = 'ok'
+            #     else:
+            #         flags[3] = 'X'
             
             if not all([f == '' for f in flags]):
                 status = ""
                 for f in flags:
-                    status += '{0:>8}'.format(f)
+                    status += '{0:>10}'.format(f)
                 status += " {0}".format(r)
 
                 print status
@@ -190,9 +197,9 @@ def main():
         
     elif command == 'push':
         for r in resources:
-            if r.something_to_push() and r.can_be_ff():
+            if r.something_to_push() and r.simple_push():
                 if not quiet:
-                     print 'Fetching for %s' % r
+                     print 'Pushing for %s' % r
 
                 r.push()
 
