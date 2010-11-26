@@ -79,14 +79,38 @@ def main():
                 print 'Already downloaded %s.' % r 
                 
     elif command == 'fetch':
-        quiet = False
         for r in resources:
-            if not quiet:
-                print 'Fetching for %s' % r
+        
             if r.config['type'] == 'git':
+                print 'Fetching for %s' % r
                 res = r.fetch()
                 if res:  
                     print "fetched {dir}".format(dir=r)
+                
+    elif command == 'pfetch':
+
+        quiet = False
+        
+        from multiprocessing import Pool, TimeoutError
+        pool = Pool(processes=10)            
+        
+        results = {}
+        for r in resources:
+            results[r] = pool.apply_async(fetch, [r])
+
+        while results:
+            print "Still %s to go" % len(results)
+            for r, res in list(results.items()):
+                try:
+                    ret = res.get(timeout=0.1)
+                    del results[r]
+                except TimeoutError:
+                    continue
+                except Exception as e:
+                    print "%s: Could not fetch: %s" % (r, e)
+                    del results[r]
+            
+        print "done" 
                      
     elif command == 'update':
         for r in resources:
@@ -124,8 +148,16 @@ def main():
             if r.something_to_commit():
                 r.commit()
     else:
-        raise Exception('Uknown command "%s".' % command)
+        raise Exception('Unknown command "%s".' % command)
         
+def fetch(r):
+    if r.config['type'] == 'git':
+        print 'Fetching for %s' % r
+        res = r.fetch()
+        if res:  
+            print "fetched {dir}".format(dir=r)
+
+
 if __name__ == '__main__':
     main()
        
