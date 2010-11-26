@@ -78,6 +78,16 @@ def main():
             else:
                 print 'Already downloaded %s.' % r 
                 
+    elif command == 'fetch':
+        quiet = False
+        for r in resources:
+            if not quiet:
+                print 'Fetching for %s' % r
+            if r.config['type'] == 'git':
+                res = r.fetch()
+                if res:  
+                    print "fetched {dir}".format(dir=r)
+                     
     elif command == 'update':
         for r in resources:
             r.update()
@@ -96,7 +106,7 @@ def main():
             
             if to_commit or to_push:
                 s1 = "commit" if to_commit else ""
-                s2 = "push" if to_push else ""
+                s2 = "merge" if to_push else ""
                 
                 print "{s1:>8} {s2:>8}  {dir}".format(s1=s1,s2=s2,dir=r)
             else:

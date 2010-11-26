@@ -10,9 +10,17 @@ class Git(Resource):
     def checkout(self):    
         system_cmd_fail('.', 'git clone %s %s' % (self.url, self.destination))
 
+    def fetch(self):
+        stdout = system_output(self.destination, 'git fetch')
+        if stdout:
+            return True
+        else:
+            return False
+            
     def update(self):
         system_cmd_fail(self.destination, 'git fetch')
-        system_cmd_fail(self.destination, 'git pull origin %s' % self.branch)
+        system_cmd_fail(self.destination, 'git merge origin/%s %s' % 
+            (self.branch, self.branch))
 
     def dirty(self):
         command = 'git diff --exit-code --quiet'
