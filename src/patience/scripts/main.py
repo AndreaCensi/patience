@@ -135,7 +135,13 @@ def main():
             
             if to_commit or to_push:
                 s1 = "commit" if to_commit else ""
-                s2 = "merge" if to_push else ""
+                if not to_push:
+                    s2 = ""
+                else:
+                    if r.can_be_ff():
+                        s2 = "ff"
+                    else:
+                        s2 = "merge" 
                 
                 print "{s1:>8} {s2:>8}  {dir}".format(s1=s1,s2=s2,dir=r)
             else:
