@@ -69,6 +69,9 @@ def main():
         raise Exception('Please provide command.')
     command = sys.argv[1]
     
+    
+    quiet = False
+
 
     if command == 'checkout':
         for r in resources:
@@ -82,15 +85,14 @@ def main():
         for r in resources:
         
             if r.config['type'] == 'git':
-                print 'Fetching for %s' % r
+                if not quiet:
+                    print 'Fetching for %s' % r
                 res = r.fetch()
                 if res:  
                     print "fetched {dir}".format(dir=r)
                 
     elif command == 'pfetch':
 
-        quiet = False
-        
         from multiprocessing import Pool, TimeoutError
         pool = Pool(processes=10)            
         
@@ -114,6 +116,9 @@ def main():
                      
     elif command == 'update':
         for r in resources:
+            if not quiet:
+                print 'Updating %s' % r
+
             r.update()
 
     elif command == 'install':
