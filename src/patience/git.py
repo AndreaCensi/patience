@@ -22,7 +22,7 @@ class Git(Resource):
         self.merge()
 
     def merge(self):
-        if self.something_to_pull():
+        if self.something_to_merge():
             if self.simple_merge():
                 print "%s: merging" % self
 
@@ -34,13 +34,13 @@ class Git(Resource):
     def num_modified(self):
         command = 'git ls-files -m -d'
         output = system_output(self.destination, command)
-        files = output.split('\n') if output else []
+        files = linesplit(output)
         return len(files)
 
     def num_untracked(self):
         command = 'git ls-files --other --exclude-standard' #' --directory'
         output = system_output(self.destination, command)
-        files = output.split('\n') if output else []
+        files = linesplit(output)
         return len(files)
     
     def something_to_push(self):
@@ -49,16 +49,16 @@ class Git(Resource):
         b2 = self.branch
         command = 'git log {0}..{1} --no-merges --pretty=oneline'.format(b1,b2)
         output = system_output(self.destination, command)
-        commits = output.split('\n') if output else []
+        commits = linesplit(output)
         return len(commits)
 
-    def something_to_pull(self):
+    def something_to_merge(self):
         ''' Returns the number of commits that we can merge from remote branch.'''
         b1 = self.branch
         b2 = 'origin/%s' % self.branch
         command = 'git log {0}..{1} --no-merges --pretty=oneline'.format(b1,b2)
         output = system_output(self.destination, command)
-        commits = output.split('\n') if output else []
+        commits = linesplit(output)
         return len(commits)
     
     def simple_merge(self):
@@ -105,3 +105,8 @@ class Git(Resource):
         out = system_output('cd %s && git rev-parse HEAD' % self.destination)    
         out = out.split()[0]
         return out
+
+def linesplit(s):
+    ''' Splits a string in lines; removes empty. '''
+    return filter(lambda x:x, s.split('\n'))
+    

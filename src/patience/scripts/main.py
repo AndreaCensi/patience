@@ -96,7 +96,7 @@ def main():
                 
     elif command == 'merge':
         for r in resources:
-            if r.something_to_pull() and r.simple_merge():
+            if r.something_to_merge() and r.simple_merge():
                 r.merge()
                 
     elif command == 'fetch':
@@ -150,9 +150,10 @@ def main():
             num_modified = r.num_modified()
             num_untracked = r.num_untracked()
             to_push = r.something_to_push()
-            to_pull = r.something_to_pull()
+            to_merge = r.something_to_merge()
 
             flags = [''] * 3
+            sizes = [10,13,13]
             
             if num_modified or num_untracked:
                 fm = '%3dm' % num_modified if num_modified else "    "
@@ -164,8 +165,8 @@ def main():
                 
                 flags[0] = fm +' '+ fu
                 
-            if to_pull:
-                flags[1] = 'merge (%d)' % to_pull
+            if to_merge:
+                flags[1] = 'merge (%d)' % to_merge
                 if not r.simple_merge():
                     flags[1] += ' (!)'
                 else:
@@ -180,8 +181,9 @@ def main():
             
             if not all([f == '' for f in flags]):
                 status = ""
-                for f in flags:
-                    status += '{0:>15}'.format(f)
+                for i, f in enumerate(flags):
+                    fm = "{0:<%d}" % sizes[i]
+                    status += fm.format(f)
                 status += " {0}".format(r)
 
                 print status
