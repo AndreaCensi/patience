@@ -92,7 +92,8 @@ class Git(Resource):
                 try:
                     msg = raw_input('message: ')
                     system_cmd_fail(self.destination, 'git commit -a -m "%s"' % msg )
-                except:
+                except Exception as e:
+                    print e
                     print "OK, will not do it"
     
     def push(self):
