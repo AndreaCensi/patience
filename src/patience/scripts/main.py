@@ -25,9 +25,10 @@ def instantiate(config):
         raise Exception('Incomplete config: %s' % config)
     
     if not 'type' in config:
-        if 'git' in config['url']:
+        url = config['url']
+        if 'git' in url:
             config['type'] = 'git'
-        elif 'svn' in config['url']:
+        elif 'svn' in url:
             # guess git
             config['type'] = 'subversion'
         else:
@@ -57,17 +58,29 @@ def find_configuration(dir=os.path.curdir, name='resources.yaml'):
         
         dir = parent
         
+from optparse import OptionParser
 
 def main():
-    config = find_configuration()
+    
+    parser = OptionParser()
+    parser.add_option("--config", help="Location of yaml configuration")
+    (options, args) = parser.parse_args() #@UnusedVariable
+
+    if options.config:
+        config = options.config
+    else:
+        config = find_configuration()
+        
     resources = list(yaml.load_all(open(config)))
     resources = filter(lambda x: x is not None, resources)
     resources = map(instantiate, resources)
     
     
-    if len(sys.argv) < 2:
+    if len(args) == 0:
         raise Exception('Please provide command.')
-    command = sys.argv[1]
+    if len(args) > 1:
+        raise Exception('Please provide only one command.')
+    command = args[0]
     
     
     quiet = False
@@ -129,27 +142,44 @@ def main():
         for r in resources:
             if not r.is_downloaded():
                 raise Exception('Could not verify status of "%s" before download.' % r)
-            to_commit = r.something_to_commit()
-            to_push = r.branches_are_different()
-#           to_pull = r.something_to_pull()
-            
-            if to_commit or to_push:
-                s1 = "commit" if to_commit else ""
-                if not to_push:
-                    s2 = ""
-                else:
-                    if r.something_to_push():
-                        s2 = 'push'
-                    else:
-                        if r.can_be_ff():
-                            s2 = "ff"
-                        else:
-                            s2 = "merge" 
-                
-                print "{s1:>8} {s2:>8}  {dir}".format(s1=s1,s2=s2,dir=r)
+            num_modified = r.num_modified()
+            num_untracked = r.num_untracked()
+            to_push = r.something_to_push()
+            to_pull = r.something_to_pull()
+            if to_push or to_pull:
+               ff = r.can_be_ff()
             else:
-                pass
-#                print "%s: all ok." % r
+               ff = False
+            
+            flags = [''] * 4
+            
+            if num_modified or num_untracked:
+                fm = '%2dm' % num_modified if num_modified else "   "
+                fu = '%2du' % num_untracked if num_untracked else "   "
+                
+                flags[0] = fm +' '+ fu
+                
+            if to_pull:
+                flags[1] = 'pull'
+
+            if to_push:
+                flags[2] = 'push'
+            
+            if to_push or to_pull:
+            
+                if ff:
+                    flags[3] = 'ok'
+                else:
+                    flags[3] = 'X'
+            
+            if not all([f == '' for f in flags]):
+                status = ""
+                for f in flags:
+                    status += '{0:>8}'.format(f)
+                status += " {0}".format(r)
+
+                print status
+            
     elif command == 'tag':
         h = []
         for r in resources:
@@ -157,6 +187,15 @@ def main():
             c['revision'] = r.current_revision()
             h.append(c)
         print yaml.dump(h)
+        
+    elif command == 'push':
+        for r in resources:
+            if r.something_to_push() and r.can_be_ff():
+                if not quiet:
+                     print 'Fetching for %s' % r
+
+                r.push()
+
     elif command == 'commit':
         for r in resources:
             if r.something_to_commit():
