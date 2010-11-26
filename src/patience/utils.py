@@ -15,7 +15,6 @@ def system_cmd(cwd, cmd):
      stderr=subprocess.PIPE)
     if val != 0:
         pass
-        # print "%s: %s : %s" % (val, cwd, cmd)
     return val
 
 def system_cmd_show(cwd, cmd):
