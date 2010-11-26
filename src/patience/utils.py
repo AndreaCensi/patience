@@ -17,8 +17,7 @@ def system_cmd(cwd, cmd):
         pass
     return val
 
-def system_cmd_show(cwd, cmd):
-    print cmd, cmd2args(cmd)
+def system_cmd_show(cwd, cmd): 
     res = subprocess.call(cmd2args(cmd), cwd=cwd, stdout=sys.stdout, stderr=sys.stderr)
     if res != 0:
         raise Exception('Command "%s" failed. (ret value: %s)' % (cmd, res))
