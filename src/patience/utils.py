@@ -15,6 +15,12 @@ def system_cmd_fail(cwd, cmd):
     if res != 0:
         raise Exception('Command "%s" failed. (ret value: %s)' % (cmd, res))
 
+def system_cmd_show(cwd, cmd):
+    res = subprocess.call(cmd.split(), cwd=cwd, stdout=sys.stdout, stderr=sys.stderr)
+    if res != 0:
+        raise Exception('Command "%s" failed. (ret value: %s)' % (cmd, res))
+
+
 def system_output(cwd, cmd):
     ''' Gets the output of a command,  raise exception if it failes '''
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
