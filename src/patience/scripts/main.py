@@ -78,6 +78,40 @@ def main():
             else:
                 print 'Already downloaded %s.' % r 
                 
+    elif command == 'fetch':
+        for r in resources:
+        
+            if r.config['type'] == 'git':
+                print 'Fetching for %s' % r
+                res = r.fetch()
+                if res:  
+                    print "fetched {dir}".format(dir=r)
+                
+    elif command == 'pfetch':
+
+        quiet = False
+        
+        from multiprocessing import Pool, TimeoutError
+        pool = Pool(processes=10)            
+        
+        results = {}
+        for r in resources:
+            results[r] = pool.apply_async(fetch, [r])
+
+        while results:
+            print "Still %s to go" % len(results)
+            for r, res in list(results.items()):
+                try:
+                    ret = res.get(timeout=0.1)
+                    del results[r]
+                except TimeoutError:
+                    continue
+                except Exception as e:
+                    print "%s: Could not fetch: %s" % (r, e)
+                    del results[r]
+            
+        print "done" 
+                     
     elif command == 'update':
         for r in resources:
             r.update()
@@ -96,7 +130,7 @@ def main():
             
             if to_commit or to_push:
                 s1 = "commit" if to_commit else ""
-                s2 = "push" if to_push else ""
+                s2 = "merge" if to_push else ""
                 
                 print "{s1:>8} {s2:>8}  {dir}".format(s1=s1,s2=s2,dir=r)
             else:
@@ -114,8 +148,16 @@ def main():
             if r.something_to_commit():
                 r.commit()
     else:
-        raise Exception('Uknown command "%s".' % command)
+        raise Exception('Unknown command "%s".' % command)
         
+def fetch(r):
+    if r.config['type'] == 'git':
+        print 'Fetching for %s' % r
+        res = r.fetch()
+        if res:  
+            print "fetched {dir}".format(dir=r)
+
+
 if __name__ == '__main__':
     main()
        
