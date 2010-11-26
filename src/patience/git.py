@@ -26,8 +26,8 @@ class Git(Resource):
             if self.simple_merge():
                 print "%s: merging" % self
 
-                system_cmd_fail(self.destination, 'git merge origin/%s %s' % 
-                    (self.branch, self.branch))
+                system_cmd_fail(self.destination, 
+                'git merge origin/{branch}'.format(branch=self.branch))
             else:
                 print "%s: Will not merge, because more than a FF is required." % self
 
