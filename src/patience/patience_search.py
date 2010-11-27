@@ -68,8 +68,8 @@ def main():
     
     f.close()
 
-def find_files(directory, pattern, verbose=False):
-    for root, dirs, files in os.walk(directory):
+def find_files(directory, pattern, verbose=False, followlinks=False):
+    for root, dirs, files in os.walk(directory, followlinks=followlinks):
         if verbose:
             print root
             
