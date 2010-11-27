@@ -7,8 +7,8 @@ setup(name='patience',
       install_requires=['pyyaml'],
       entry_points={
          'console_scripts': [
-           'patience = patience.scripts.main:main',
-           'patience_search = patience.scripts.patience_search:main'
+           'patience = patience.main:main',
+           'patience_search = patience.patience_search:main'
         ]
       }, 
 )

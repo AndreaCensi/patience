@@ -2,8 +2,8 @@
 import yaml, os, re, sys
 import subprocess 
 
-from patience.subversion import *
-from patience.git import *
+from subversion import *
+from git import *
  
 
 

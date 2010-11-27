@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import glob, sys, os, fnmatch
-from patience.utils import *
+from utils import *
 
 def main():
     dirs = sys.argv[1:]
