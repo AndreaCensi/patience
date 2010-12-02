@@ -38,7 +38,7 @@ class Git(Resource):
         return len(files)
 
     def num_untracked(self):
-        command = 'git ls-files --other --exclude-standard' #' --directory'
+        command = 'git ls-files --others --exclude-standard' #' --directory'
         output = system_output(self.destination, command)
         files = linesplit(output)
         return len(files)
