@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-import yaml, os, re, sys
-import subprocess
+import sys, subprocess
 
 def cmd2args(s):
     ''' if s is a list, leave it like that; otherwise split()'''
@@ -11,7 +10,7 @@ def cmd2args(s):
         
 def system_cmd(cwd, cmd):
     ''' Do not output; return return value. '''
-    val = subprocess.call(cmd2args(cmd), cwd=cwd,  stdout=subprocess.PIPE,
+    val = subprocess.call(cmd2args(cmd), cwd=cwd, stdout=subprocess.PIPE,
      stderr=subprocess.PIPE)
     if val != 0:
         pass
@@ -30,12 +29,12 @@ def system_output(cwd, cmd):
     p.wait()
     ret = p.returncode 
     if ret != 0:
-        raise Exception("Command %s (%s) failed in cwd = %s: got return code: %s\n\n%s" %  \
+        raise Exception("Command %s (%s) failed in cwd = %s: got return code: %s\n\n%s" % \
             (cmd.__repr__(), cmd2args(cmd).__repr__(), cwd, ret, stderr))
     return output
         
 def system_cmd_fail(cwd, cmd):
-    res = system_cmd(cwd,cmd)
+    res = system_cmd(cwd, cmd)
     if res != 0:
         raise Exception('Command "%s" failed. (ret value: %s)' % (cmd, res))
 

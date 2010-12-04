@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import glob, sys, os, fnmatch
-from utils import *
+import  fnmatch, sys, os
+from .utils  import system_output
 
 def main():
     dirs = sys.argv[1:]
@@ -31,13 +31,13 @@ def main():
         #     continue
         remotes = system_output(repo, 'git remote')
         if not 'origin' in remotes.split():
-            print "No remote origin found for %s; skipping."  % repo
+            print "No remote origin found for %s; skipping." % repo
             continue
                 
         try:
             result = system_output(repo, 'git remote show origin')
         except Exception as e:
-            print "Could not get origin URL for %s; skipping."  % repo
+            print "Could not get origin URL for %s: %s; skipping." % (repo, e)
             continue
             
         tokens = result.split()
@@ -52,9 +52,9 @@ def main():
                 branch = line.split()[1]
                 break
         else:
-            print("Could not parse branch from %s, using master." %
+            print("Could not parse branch from %s, using master." % 
                   result.__repr__())
-            branch = master
+            branch = 'master'
                 
         
         branch = 'master'

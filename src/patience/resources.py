@@ -1,4 +1,5 @@
 import os
+from .utils import system_cmd_fail
 
 class Resource: 
     def __init__(self, config):
@@ -37,7 +38,7 @@ class Resource:
             system_cmd_fail(self.destination, 'python setup.py develop')
         elif install_type == 'cmake':
             system_cmd_fail(self.destination, 'cmake -DCMAKE_INSTALL_PREFIX=${BVENV_PREFIX} .')
-            system_cmd_fail(self.destination, 'make' )
+            system_cmd_fail(self.destination, 'make')
         
             system_cmd_fail(self.destination, 'make install')
         

@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-import yaml, os, re, sys
-import subprocess 
+#!/usr/bin/env python 
+import os, yaml
 
-from subversion import *
-from git import *
- 
+from .subversion import Subversion
+from .git import Git
+from .resources import Resource
 
 
 def instantiate(config, base_dir='.'):
@@ -12,7 +11,7 @@ def instantiate(config, base_dir='.'):
         raise Exception('Incomplete config: %s' % config)
     
     config['destination'] = os.path.expanduser(os.path.expandvars(config['destination']))
-    config['destination']  = os.path.normpath( os.path.join(base_dir, config['destination']) )
+    config['destination'] = os.path.normpath(os.path.join(base_dir, config['destination']))
     
     if not 'type' in config:
         url = config['url']
@@ -42,7 +41,7 @@ def find_configuration(dir=os.path.curdir, name='resources.yaml'):
         if os.path.exists(config):
             return config
         
-        parent  = os.path.dirname(dir)
+        parent = os.path.dirname(dir)
         if parent == dir: # reached /
             raise Exception('Could not find configuration "%s".' % name)
         
@@ -112,7 +111,7 @@ def main():
             print "Still %s to go" % len(results)
             for r, res in list(results.items()):
                 try:
-                    ret = res.get(timeout=0.1)
+                    res.get(timeout=0.1)
                     del results[r]
                 except TimeoutError:
                     continue
@@ -143,7 +142,7 @@ def main():
             to_merge = r.something_to_merge()
 
             flags = [''] * 3
-            sizes = [10,13,13]
+            sizes = [10, 13, 13]
             
             if num_modified or num_untracked:
                 fm = '%3dm' % num_modified if num_modified else "    "
@@ -153,7 +152,7 @@ def main():
                 if num_untracked > 99:
                     fu = '>99u'
                 
-                flags[0] = fm +' '+ fu
+                flags[0] = fm + ' ' + fu
                 
             if to_merge:
                 flags[1] = 'merge (%d)' % to_merge
@@ -190,13 +189,13 @@ def main():
         for r in resources:
             if r.something_to_push() and r.simple_push():
                 if not quiet:
-                     print 'Pushing for %s' % r
+                    print 'Pushing for %s' % r
 
                 r.push()
 
     elif command == 'commit':
         for r in resources:
-            if r.num_modified()>0 and  r.num_untracked() == 0:
+            if r.num_modified() > 0 and  r.num_untracked() == 0:
                 r.commit()
     else:
         raise Exception('Unknown command "%s".' % command)

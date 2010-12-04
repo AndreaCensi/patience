@@ -1,5 +1,5 @@
-from patience.resources import *
-from patience.utils import *
+from .resources import Resource
+from .utils import system_output, system_cmd_fail
 
 class Subversion(Resource):
     def __init__(self, config):
@@ -16,7 +16,7 @@ class Subversion(Resource):
         return "" != system_output('svn status %s' % (self.destination))
 
     def commit(self):
-        system_cmd_fail(self.destination, 'svn commit' )
+        system_cmd_fail(self.destination, 'svn commit')
 
     def current_revision(self):
         out = system_output('svnversion %s' % self.destination)

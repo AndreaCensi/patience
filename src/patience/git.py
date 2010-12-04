@@ -1,5 +1,5 @@
-from patience.resources import *
-from patience.utils import *
+from .resources import Resource
+from .utils import system_output, system_cmd_fail, system_cmd_show
 
 class Git(Resource):
     def __init__(self, config):
@@ -26,7 +26,7 @@ class Git(Resource):
             if self.simple_merge():
                 print "%s: merging" % self
 
-                system_cmd_fail(self.destination, 
+                system_cmd_fail(self.destination,
                 'git merge origin/{branch}'.format(branch=self.branch))
             else:
                 print "%s: Will not merge, because more than a FF is required." % self
@@ -47,7 +47,7 @@ class Git(Resource):
         ''' Returns the number of commits that we can push to the remote branch.'''
         b1 = 'origin/%s' % self.branch
         b2 = self.branch
-        command = 'git log {0}..{1} --no-merges --pretty=oneline'.format(b1,b2)
+        command = 'git log {0}..{1} --no-merges --pretty=oneline'.format(b1, b2)
         output = system_output(self.destination, command)
         commits = linesplit(output)
         return len(commits)
@@ -56,7 +56,7 @@ class Git(Resource):
         ''' Returns the number of commits that we can merge from remote branch.'''
         b1 = self.branch
         b2 = 'origin/%s' % self.branch
-        command = 'git log {0}..{1} --no-merges --pretty=oneline'.format(b1,b2)
+        command = 'git log {0}..{1} --no-merges --pretty=oneline'.format(b1, b2)
         output = system_output(self.destination, command)
         commits = linesplit(output)
         return len(commits)
@@ -64,7 +64,7 @@ class Git(Resource):
     def simple_merge(self):
         ''' Checks that our branch can be fast forwarded. ''' 
         rev = system_output(self.destination, 'git rev-parse %s' % self.branch).strip()
-        base = system_output(self.destination, 
+        base = system_output(self.destination,
             'git merge-base %s origin/%s' % (rev, self.branch)).strip()
         if rev == base:
             return True
@@ -84,7 +84,7 @@ class Git(Resource):
     def commit(self):
         if self.num_modified():
             n = self.num_untracked()
-            if n >0 :
+            if n > 0 :
                 print "%s: cannot commit; there are %s untracked files." % (self, n)
             else:
                 print "%s: commit" % self
@@ -94,7 +94,7 @@ class Git(Resource):
                 except Exception as e:
                     print e
                     return
-                system_cmd_fail(self.destination, ['git', 'commit', '-a', '-m', msg] )
+                system_cmd_fail(self.destination, ['git', 'commit', '-a', '-m', msg])
     
     def push(self):
         if self.simple_push():
