@@ -1,0 +1,3 @@
+
+class ActionException(Exception):
+    pass

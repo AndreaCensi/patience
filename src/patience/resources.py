@@ -11,6 +11,8 @@ class Resource:
     
     def __str__(self):
         return self.destination
+    def __repr__(self):
+        return 'Resource(%r)' % self.config
     
     def checkout(self):    
         pass

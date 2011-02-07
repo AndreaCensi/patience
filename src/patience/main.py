@@ -7,6 +7,8 @@ from .resources import Resource
 
 from .logging import error, info, fatal
 
+from .actions import Action
+
 
 class ConfigException(Exception):
     def __init__(self, error, config):
@@ -61,23 +63,28 @@ def find_configuration(dir=os.path.curdir, name='resources.yaml'):
 from optparse import OptionParser
 
 def load_resources(filename):
+    curdir = os.path.dirname(filename)
     for config in yaml.load_all(open(filename)):
         config['from'] = filename
         sub = config.get('sub', None)
         if sub:
             try:
-                for x in load_resources(sub):
+                for x in load_resources(os.path.join(curdir, sub)):
                     yield x
             except Exception as e:
                 error('Could not load %r: %s' % (sub, e))
         else:
-            yield instantiate(config, os.path.dirname(filename))
+            yield instantiate(config, curdir)
 
 def main():
     
     parser = OptionParser()
     parser.add_option("--config", help="Location of yaml configuration",
                 default='resources.yaml')
+
+    parser.add_option("--seq", help="Force sequential", default=False,
+                    action='store_true')
+                
     (options, args) = parser.parse_args() #@UnusedVariable
 
     if options.config:
@@ -96,6 +103,10 @@ def main():
     
     quiet = False
 
+    if command in Action.actions:
+        action = Action.actions[command]
+        action.go(resources, force_sequential=options.seq)
+        return
 
     if command == 'checkout':
         for r in resources:
