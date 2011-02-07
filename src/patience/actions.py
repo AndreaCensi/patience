@@ -133,8 +133,8 @@ class Merge(Action):
     def __init__(self):
         Action.__init__(self, parallel=True, any_order=True)
 
-    def single_action_started(self, resource): return "1"
-    def single_action_result_display(self, resource, result): return "2"
+    def single_action_started(self, resource): pass
+    def single_action_result_display(self, resource, result): pass
 
     def single_action(self, r):
         if r.something_to_merge() and r.simple_merge():
@@ -147,8 +147,8 @@ class Push(Action):
     def __init__(self):
         Action.__init__(self, parallel=True, any_order=True)
 
-    def single_action_started(self, resource): return "p1"
-    def single_action_result_display(self, resource, result): return "p2"
+    def single_action_started(self, resource): pass
+    def single_action_result_display(self, resource, result): pass
 
     def single_action(self, r):
         if r.something_to_push() and r.simple_push():
@@ -166,7 +166,7 @@ StatusResult = namedtuple('StatusResult',status_fields)
 
 def status2string(r, res):
     flags = [''] * 3
-    sizes = [10, 13, 13]
+    sizes = [10, 18, 18]
     
     if not res.present:
         flags[0] = missing

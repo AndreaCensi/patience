@@ -74,7 +74,7 @@ class Git(Resource):
 
     def something_to_merge(self):
         ''' Returns the number of commits that we can merge from remote branch.'''
-        command = 'git log origin/{branch}..{branch} --no-merges --pretty=oneline'
+        command = 'git log {branch}..origin/{branch} --no-merges --pretty=oneline'
         output = self.runf(command)
         commits = linesplit(output)
         return len(commits)
