@@ -69,14 +69,14 @@ class Action(object):
         r2messages = {}
         to_write = list(resources)
         while handles:
-            while to_write and to_write[0] in r2messages:
-                r = to_write.pop(0)
-                m = r2messages[r]
-                del r2messages[r]
-                write_message(stream, r, m)
+            #print("handles: %d" % len(handles))
+            #print(" to write: %d" % len(to_write))
+            #print(" r2message: %d" % len(r2messages))
+            #print(" results:  %d" % len(results))
+
                 
-            sys.stderr.write("%3d to go (%3d to write)      \r" % 
-                (len(handles), len(r2messages)))
+            sys.stderr.write("%3d to go (%3d to write %d)      \r" % 
+                (len(handles), len(r2messages), len(to_write)))
             for r, res in list(handles.items()):
                 try:
                     results[r] = res.get(timeout=0.05)
@@ -93,9 +93,15 @@ class Action(object):
                 else:
                     r2messages[r] = m2
 
-        m3 = self.summary(resources, results)
-        if m3:
-            stream.write('%s\n' % m3)
+            while to_write and to_write[0] in r2messages:
+                which = to_write[0]
+		r = to_write.pop(to_write.index(which))
+                m = r2messages[r]
+                del r2messages[r]
+                write_message(stream, r, m)
+	if stream:
+        	m3 = self.summary(resources, results)
+        	if m3: stream.write('%s\n' % m3)
 
 
     def summary(self, resources, results):
@@ -106,10 +112,6 @@ class Action(object):
                 s += '{0:<30}: {1}\n'.format(path, e)
         return s
         
-    
-    # def single_action_started(self, resource): pass
-    # def single_action_result_display(self, resource, result): pass
-    
 
         
 class Fetch(Action):
