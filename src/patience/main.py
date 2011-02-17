@@ -5,14 +5,34 @@ from .subversion import Subversion
 from .git import Git
 from .resources import Resource
 
+from .logging import error 
+from .actions import Action
+import datetime
+import sys
+import platform
+
+
+class ConfigException(Exception):
+    def __init__(self, error, config):
+        self.error = error
+        self.config = config
+        
+    def __str__(self):
+        return "%s\n%s" % (self.error, self.config)
 
 def instantiate(config, base_dir='.'):
+
     if not all([x in config for x in ['url', 'destination']]):
-        raise Exception('Incomplete config: %s' % config)
+        raise ConfigException('Incomplete config.',  config)
     
-    config['destination'] = os.path.expanduser(os.path.expandvars(config['destination']))
-    config['destination'] = os.path.normpath(os.path.join(base_dir, config['destination']))
-    
+    dir = config['destination']
+    dir = os.path.expandvars(dir)
+    dir = os.path.expanduser(dir)
+    dir = os.path.join(base_dir, dir)
+    dir = os.path.abspath(dir)
+    dir = os.path.realpath(dir)
+    config['destination'] = dir                 
+                                             
     if not 'type' in config:
         url = config['url']
         if 'git' in url:
@@ -21,7 +41,7 @@ def instantiate(config, base_dir='.'):
             # guess git
             config['type'] = 'subversion'
         else:
-            raise Exception('Could not guess type from url "%s".' % url)
+            raise ConfigException('Could not guess type from url', config)
         
     
     res_type = config['type']
@@ -32,7 +52,7 @@ def instantiate(config, base_dir='.'):
     elif res_type == 'included':
         return Resource(config)
     else:
-        raise Exception('Uknown resource type "%s".' % res_type)
+        raise ConfigException('Uknown resource type.', config)
 
 def find_configuration(dir=os.path.curdir, name='resources.yaml'):
     while True:
@@ -49,10 +69,33 @@ def find_configuration(dir=os.path.curdir, name='resources.yaml'):
         
 from optparse import OptionParser
 
+def load_resources(filename):
+    curdir = os.path.dirname(filename)
+    for config in yaml.load_all(open(filename)):
+        config['from'] = filename
+        sub = config.get('sub', None)
+        if sub:
+            try:
+                for x in load_resources(os.path.join(curdir, sub)):
+                    yield x
+            except Exception as e:
+                error('Could not load %r: %s' % (sub, e))
+        else:
+            yield instantiate(config, curdir)
+
 def main():
     
     parser = OptionParser()
-    parser.add_option("--config", help="Location of yaml configuration")
+    parser.add_option("--config", help="Location of yaml configuration",
+                default='resources.yaml')
+
+    parser.add_option("--seq", help="Force sequential", default=False,
+                    action='store_true')
+                
+
+    parser.add_option("--yaml", help="Write YAML output", default=False,
+                    action='store_true')
+
     (options, args) = parser.parse_args() #@UnusedVariable
 
     if options.config:
@@ -60,10 +103,7 @@ def main():
     else:
         config = find_configuration()
         
-    resources = list(yaml.load_all(open(config)))
-    resources = filter(lambda x: x is not None, resources)
-    resources = [instantiate(x, base_dir=os.path.dirname(config)) for x in resources]
-    
+    resources = list(load_resources(config)) 
     
     if len(args) == 0:
         raise Exception('Please provide command.')
@@ -75,29 +115,33 @@ def main():
     quiet = False
 
 
+    if options.yaml:
+        stream = None
+    else:
+        stream = sys.stdout
+        
+    if command in Action.actions:
+        action = Action.actions[command]
+        results = action.go(resources, force_sequential=options.seq, stream=stream)
+        
+        if options.yaml:
+            s = {'date': datetime.datetime.now(),
+                 'hostname': platform.node(),
+                 'command': command,
+                 'config': config,
+                 'resources': resources,
+                 'results': results}
+            yaml.dump(s, sys.stdout, default_flow_style=False)
+        return
+
     if command == 'checkout':
         for r in resources:
             if not r.is_downloaded():
                 print 'Downloading %s...' % r
                 r.checkout()
             else:
-                print 'Already downloaded %s.' % r 
-                
-    elif command == 'merge':
-        for r in resources:
-            if r.something_to_merge() and r.simple_merge():
-                r.merge()
-                
-    elif command == 'fetch':
-        for r in resources:
-        
-            if r.config['type'] == 'git':
-                if not quiet:
-                    print 'Fetching for %s' % r
-                res = r.fetch()
-                if res:  
-                    print "fetched {dir}".format(dir=r)
-                
+                print 'Already downloaded %s.' % r                 
+               
     elif command == 'pfetch':
 
         from multiprocessing import Pool, TimeoutError
@@ -132,50 +176,6 @@ def main():
         for r in resources:
             r.install()
 
-    elif command == 'status':
-        for r in resources:
-            if not r.is_downloaded():
-                raise Exception('Could not verify status of "%s" before download.' % r)
-            num_modified = r.num_modified()
-            num_untracked = r.num_untracked()
-            to_push = r.something_to_push()
-            to_merge = r.something_to_merge()
-
-            flags = [''] * 3
-            sizes = [10, 13, 13]
-            
-            if num_modified or num_untracked:
-                fm = '%3dm' % num_modified if num_modified else "    "
-                if num_modified > 99:
-                    fm = '>99u'
-                fu = '%3du' % num_untracked if num_untracked else "    "
-                if num_untracked > 99:
-                    fu = '>99u'
-                
-                flags[0] = fm + ' ' + fu
-                
-            if to_merge:
-                flags[1] = 'merge (%d)' % to_merge
-                if not r.simple_merge():
-                    flags[1] += ' (!)'
-                else:
-                    flags[1] += '    '            
-
-            if to_push:
-                flags[2] = 'push (%d)' % to_push
-                if not r.simple_push():
-                    flags[2] += ' (!)'
-                else:
-                    flags[2] += '    '         
-            
-            if not all([f == '' for f in flags]):
-                status = ""
-                for i, f in enumerate(flags):
-                    fm = "{0:<%d}" % sizes[i]
-                    status += fm.format(f)
-                status += " {0}".format(r)
-
-                print status
             
     elif command == 'tag':
         h = []
@@ -184,15 +184,7 @@ def main():
             c['revision'] = r.current_revision()
             h.append(c)
         print yaml.dump(h)
-        
-    elif command == 'push':
-        for r in resources:
-            if r.something_to_push() and r.simple_push():
-                if not quiet:
-                    print 'Pushing for %s' % r
-
-                r.push()
-
+         
     elif command == 'commit':
         for r in resources:
             if r.num_modified() > 0 and  r.num_untracked() == 0:

@@ -1,16 +1,37 @@
 import os
 from .utils import system_cmd_fail
 
+def get_friendly(path):
+    
+    options = []
+    
+    options.append(os.path.relpath(path, os.getcwd()))
+
+    home = os.path.expanduser('~')
+    
+    if path.startswith(home):
+        options.append(path.replace(home, '~'))
+        
+    options.append(path)
+
+    options.sort(key=lambda x: len(x))
+    return options[0]
+
 class Resource: 
     def __init__(self, config):
         self.config = config
         self.destination = config['destination']
+        self.short_path =get_friendly(self.destination)
         
+
     def is_downloaded(self):
         return os.path.exists(self.destination)
     
     def __str__(self):
-        return self.destination
+        return self.short_path
+    
+    def __repr__(self):
+        return 'Resource(%r)' % self.destination
     
     def checkout(self):    
         pass
