@@ -57,7 +57,8 @@ def instantiate(config, base_dir='.'):
 def find_configuration(dir=os.path.curdir, name='resources.yaml'):
     while True:
         dir = os.path.realpath(dir)
-        config = os.path.join(dir, name) 
+        config = os.path.join(dir, name)
+         
         if os.path.exists(config):
             return config
         
@@ -86,8 +87,7 @@ def load_resources(filename):
 def main():
     
     parser = OptionParser()
-    parser.add_option("--config", help="Location of yaml configuration",
-                default='resources.yaml')
+    parser.add_option("--config", help="Location of yaml configuration")
 
     parser.add_option("--seq", help="Force sequential", default=False,
                     action='store_true')
@@ -102,6 +102,8 @@ def main():
         config = options.config
     else:
         config = find_configuration()
+        
+
         
     resources = list(load_resources(config)) 
     
