@@ -100,10 +100,10 @@ class Action(object):
 
     def summary(self, resources, results):
         s = ''
-        for r in resources:
-            if isinstance(results[r], Exception):
-                e = str(results[r]).split('\n')[0]
-                s += '{0:<30}: {1}\n'.format(r, e)
+        for path, res in results.items():
+            if isinstance(res, Exception):
+                e = str(res).split('\n')[0]
+                s += '{0:<30}: {1}\n'.format(path, e)
         return s
         
     
