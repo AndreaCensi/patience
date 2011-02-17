@@ -169,7 +169,7 @@ def status2string(r, res):
     sizes = [10, 18, 18]
     
     if not res.present:
-        flags[0] = missing
+        flags[0] = 'missing'
     else:    
         if res.num_modified or res.num_untracked:
             fm = '%3dm' % res.num_modified if res.num_modified else "    "
