@@ -38,7 +38,7 @@ class Resource:
 
     def update(self):
         pass
-
+        
     def current_revision(self):
         return None
 
@@ -65,4 +65,4 @@ class Resource:
         
         
         else:
-            raise Exception('Uknown install type "%s".' % install_type)
+            raise Exception('Unknown install type "%s".' % install_type)
