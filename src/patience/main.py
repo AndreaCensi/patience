@@ -5,9 +5,11 @@ from .subversion import Subversion
 from .git import Git
 from .resources import Resource
 
-from .logging import error, info, fatal
-
+from .logging import error 
 from .actions import Action
+import datetime
+import sys
+import platform
 
 
 class ConfigException(Exception):
@@ -23,9 +25,14 @@ def instantiate(config, base_dir='.'):
     if not all([x in config for x in ['url', 'destination']]):
         raise ConfigException('Incomplete config.',  config)
     
-    config['destination'] = os.path.expanduser(os.path.expandvars(config['destination']))
-    config['destination'] = os.path.normpath(os.path.join(base_dir, config['destination']))
-    
+    dir = config['destination']
+    dir = os.path.expandvars(dir)
+    dir = os.path.expanduser(dir)
+    dir = os.path.join(base_dir, dir)
+    dir = os.path.abspath(dir)
+    dir = os.path.realpath(dir)
+    config['destination'] = dir                 
+                                             
     if not 'type' in config:
         url = config['url']
         if 'git' in url:
@@ -85,6 +92,10 @@ def main():
     parser.add_option("--seq", help="Force sequential", default=False,
                     action='store_true')
                 
+
+    parser.add_option("--yaml", help="Write YAML output", default=False,
+                    action='store_true')
+
     (options, args) = parser.parse_args() #@UnusedVariable
 
     if options.config:
@@ -92,7 +103,7 @@ def main():
     else:
         config = find_configuration()
         
-    resources = list(load_resources(config))
+    resources = list(load_resources(config)) 
     
     if len(args) == 0:
         raise Exception('Please provide command.')
@@ -103,9 +114,24 @@ def main():
     
     quiet = False
 
+
+    if options.yaml:
+        stream = None
+    else:
+        stream = sys.stdout
+        
     if command in Action.actions:
         action = Action.actions[command]
-        action.go(resources, force_sequential=options.seq)
+        results = action.go(resources, force_sequential=options.seq, stream=stream)
+        
+        if options.yaml:
+            s = {'date': datetime.datetime.now(),
+                 'hostname': platform.node(),
+                 'command': command,
+                 'config': config,
+                 'resources': resources,
+                 'results': results}
+            yaml.dump(s, sys.stdout, default_flow_style=False)
         return
 
     if command == 'checkout':
@@ -114,13 +140,7 @@ def main():
                 print 'Downloading %s...' % r
                 r.checkout()
             else:
-                print 'Already downloaded %s.' % r 
-                
-    elif command == 'merge':
-        for r in resources:
-            if r.something_to_merge() and r.simple_merge():
-                r.merge()
-                
+                print 'Already downloaded %s.' % r                 
                
     elif command == 'pfetch':
 
@@ -164,15 +184,7 @@ def main():
             c['revision'] = r.current_revision()
             h.append(c)
         print yaml.dump(h)
-        
-    elif command == 'push':
-        for r in resources:
-            if r.something_to_push() and r.simple_push():
-                if not quiet:
-                    print 'Pushing for %s' % r
-
-                r.push()
-
+         
     elif command == 'commit':
         for r in resources:
             if r.num_modified() > 0 and  r.num_untracked() == 0:

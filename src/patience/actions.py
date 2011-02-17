@@ -23,11 +23,12 @@ class Action(object):
         self.parallel = parallel
         self.any_order = any_order
         
-    def go(self, resources, force_sequential=False, max_processes=3,stream=sys.stderr):
+    def go(self, resources, force_sequential=False, 
+                 max_processes=3, stream=sys.stdout):
         if not self.parallel or force_sequential:
-            self.go_sequential(resources, stream)
+            return self.go_sequential(resources, stream)
         else:
-            self.go_parallel(resources, stream, 
+            return self.go_parallel(resources, stream, 
                     any_order=self.any_order,
                     max_processes=max_processes)
     
@@ -38,17 +39,22 @@ class Action(object):
             # write_message(stream, r, m)
 
             try:
-                results[r] = self.single_action(r)
+                result = self.single_action(r)
             except ActionException as e:
-                results[r] = e
+                result = e
 
-            m2 = self.single_action_result_display(r, results[r])
-            write_message(stream, r, m2)
+            if stream:
+                m2 = self.single_action_result_display(r, result)
+                write_message(stream, r, m2)
 
-        m3 = self.summary(resources, results)
-
-        if m3:
-            stream.write('%s\n' % m3)
+            results[r.short_path] = result
+            
+        if stream:
+            m3 = self.summary(resources, results)
+            if m3: stream.write('%s\n' % m3)
+    
+        return results
+    
 
     def go_parallel(self, resources, stream, any_order, max_processes):
 
