@@ -34,8 +34,8 @@ class Action(object):
     def go_sequential(self, resources, stream):
         results = {}
         for r in resources:
-            m = self.single_action_starting(r)
-            write_message(stream, r, m)
+            # m = self.single_action_started(r)
+            # write_message(stream, r, m)
 
             try:
                 results[r] = self.single_action(r)
@@ -118,7 +118,7 @@ class Fetch(Action):
             if result:
                 return "fetched: %s" % result
             else:
-                return '?'
+                return None
             
     def single_action(self, r):
         if r.config['type'] == 'git':
