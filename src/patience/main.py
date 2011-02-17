@@ -121,16 +121,7 @@ def main():
             if r.something_to_merge() and r.simple_merge():
                 r.merge()
                 
-    elif command == 'fetch':
-        for r in resources:
-        
-            if r.config['type'] == 'git':
-                if not quiet:
-                    print 'Fetching for %s' % r
-                res = r.fetch()
-                if res:  
-                    print "fetched {dir}".format(dir=r)
-                
+               
     elif command == 'pfetch':
 
         from multiprocessing import Pool, TimeoutError
@@ -165,54 +156,6 @@ def main():
         for r in resources:
             r.install()
 
-    elif command == 'status':
-        for r in resources:
-
-            flags = [''] * 3
-            sizes = [10, 13, 13]
-
-            if not r.is_downloaded():
-                flags[2] = 'missing'
-                # raise Exception('Could not verify status of "%s" before download.' % r)
-            else:
-                num_modified = r.num_modified()
-                num_untracked = r.num_untracked()
-                to_push = r.something_to_push()
-                to_merge = r.something_to_merge()
-
-            
-                if num_modified or num_untracked:
-                    fm = '%3dm' % num_modified if num_modified else "    "
-                    if num_modified > 99:
-                        fm = '>99u'
-                    fu = '%3du' % num_untracked if num_untracked else "    "
-                    if num_untracked > 99:
-                        fu = '>99u'
-                
-                    flags[0] = fm + ' ' + fu
-                
-                if to_merge:
-                    flags[1] = 'merge (%d)' % to_merge
-                    if not r.simple_merge():
-                        flags[1] += ' (!)'
-                    else:
-                        flags[1] += '    '            
-
-                if to_push:
-                    flags[2] = 'push (%d)' % to_push
-                    if not r.simple_push():
-                        flags[2] += ' (!)'
-                    else:
-                        flags[2] += '    '         
-            
-                if not all([f == '' for f in flags]):
-                    status = ""
-                    for i, f in enumerate(flags):
-                        fm = "{0:<%d}" % sizes[i]
-                        status += fm.format(f)
-                    status += " {0}".format(r)
-
-                    print status
             
     elif command == 'tag':
         h = []
