@@ -4,11 +4,12 @@ from .utils import system_cmd_fail
 def replace_variables(path, rules):
     for k, v in rules:
         if path.startswith(v):
+            # print("  applied %s => %s" % (v, k))
             path = path.replace(v, k)
     return path
 
-def get_friendly(path):
-    
+def get_friendly(path, use_environment=True): # TODO: make switch
+    original = path
     options = []
     
     options.append(os.path.relpath(path, os.getcwd()))
@@ -18,14 +19,18 @@ def get_friendly(path):
     rules = []
     rules.append( ('~', os.path.expanduser('~')) ) 
     
-    envs = dict(os.environ)
-    # remove unwanted 
-    for e in list(envs.keys()):
-        if 'PWD' in e:
-            del envs[e]
+    if use_environment:
+        envs = dict(os.environ)
+        # remove unwanted 
+        for e in list(envs.keys()):
+            if 'PWD' in e:
+                del envs[e]
     
-    for k, v in envs.items():
-        rules.append(('$%s'%k, v))
+        for k, v in envs.items():
+            if v:
+                rules.append(('$%s'%k, v))
+        
+    
         
     # apply longest first
     rules.sort(key=lambda x: -len(x[1]))
@@ -34,7 +39,11 @@ def get_friendly(path):
     options.append(path)
 
     options.sort(key=lambda x: len(x))
-    return options[0]
+    result = options[0]
+    
+    # print('Converted %s  => %s' % (original, result))
+
+    return result
 
 class Resource: 
     def __init__(self, config):
