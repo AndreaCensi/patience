@@ -38,7 +38,19 @@ def get_friendly(path, use_environment=True): # TODO: make switch
     
     options.append(path)
 
-    options.sort(key=lambda x: len(x))
+    weight_doubledot = 5
+    def score(s):
+        # penalize '..' a lot
+        s = s.replace('..','*' * weight_doubledot)
+        return len(s)
+        
+    options.sort(key=score)
+    
+    if False:
+        print('Options for %s' % original)
+        for o in options:
+            print( '- %4d %s' % (score(o), o))
+        
     result = options[0]
     
     # print('Converted %s  => %s' % (original, result))
@@ -48,8 +60,8 @@ def get_friendly(path, use_environment=True): # TODO: make switch
 class Resource: 
     def __init__(self, config):
         self.config = config
-        self.destination = config['destination']
-        self.short_path =get_friendly(self.destination)
+        self.destination = config['dir']
+        self.short_path = config.get('nick', get_friendly(self.destination))
         
 
     def is_downloaded(self):

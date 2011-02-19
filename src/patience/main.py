@@ -22,16 +22,19 @@ class ConfigException(Exception):
 
 def instantiate(config, base_dir='.'):
 
-    if not all([x in config for x in ['url', 'destination']]):
-        raise ConfigException('Incomplete config.',  config)
+    if not 'url' in config:
+        raise ConfigException('Missing key "url".', config)
+        
+    if not any([x in config for x in ['dir', 'destination']]):
+        raise ConfigException('Missing key "dir".',  config)
     
-    dir = config['destination']
+    dir = config.get('dir', config.get('destination'))
     dir = os.path.expandvars(dir)
     dir = os.path.expanduser(dir)
     dir = os.path.join(base_dir, dir)
     dir = os.path.abspath(dir)
     dir = os.path.realpath(dir)
-    config['destination'] = dir                 
+    config['dir'] = dir                 
                                              
     if not 'type' in config:
         url = config['url']
@@ -81,6 +84,7 @@ def load_resources(filename):
                     yield x
             except Exception as e:
                 error('Could not load %r: %s' % (sub, e))
+                raise
         else:
             yield instantiate(config, curdir)
 
