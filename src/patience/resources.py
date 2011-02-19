@@ -1,6 +1,12 @@
 import os
 from .utils import system_cmd_fail
 
+def replace_variables(path, rules):
+    for k, v in rules:
+        if path.startswith(v):
+            path = path.replace(v, k)
+    return path
+
 def get_friendly(path):
     
     options = []
@@ -9,9 +15,22 @@ def get_friendly(path):
 
     home = os.path.expanduser('~')
     
-    if path.startswith(home):
-        options.append(path.replace(home, '~'))
+    rules = []
+    rules.append( ('~', os.path.expanduser('~')) ) 
+    
+    envs = dict(os.environ)
+    # remove unwanted 
+    for e in list(envs.keys()):
+        if 'PWD' in e:
+            del envs[e]
+    
+    for k, v in envs.items():
+        rules.append(('$%s'%k, v))
         
+    # apply longest first
+    rules.sort(key=lambda x: -len(x[1]))
+    path = replace_variables(path, rules)
+    
     options.append(path)
 
     options.sort(key=lambda x: len(x))
