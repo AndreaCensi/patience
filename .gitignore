@@ -5,3 +5,4 @@ dist
 install.sh
 .project
 .pydevproject
+*.py~

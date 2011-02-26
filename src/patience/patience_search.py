@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import  fnmatch, sys, os
+import yaml
+
 from .utils  import system_output
 from .logging import error, info, fatal
 
@@ -14,33 +16,64 @@ def main():
     output = os.path.join(dir, RESOURCES)
     if os.path.exists(output):
         raise Exception('Output file %s already exist.' % output)
-
-    repos = list(find_repos(dir, verbose=False))
-    if not repos:
-        fatal('No repos found in %r.' % dir)
+    
+    def format(s):
+        return s.ljust(80)[:80]
+    
+    repolist = []
+    def append(r):
+        cols = 80
+        if 'sub' in r:
+            info(format("Found sub in: %s" % repo))
+        elif 'dir' in r:
+            info(format('Found git in: %s' % repo))
+        repolist.append(r)
         
-    f = open(output, 'w')
-    for repo in repos:
+    def consider(repo):
         if RESOURCES in repo:
-            info("Found sub in: %s" % repo)
-            f.write('---\n')
-            f.write('sub: %s\n' % os.path.relpath(repo, dir))
+            append({'sub':  os.path.relpath(repo, dir)})
+            
         if '.git' in repo:
             git_dir = repo
             destination = os.path.relpath(os.path.dirname(git_dir), dir)
-            f.write('---\n')
-            f.write('destination: %s\n' % destination)
-            f.write('type: git\n')
-
+            found = {'dir': destination}
+            info('Found git in: %s' % found['dir'])
+                
             try:
                 url, branch = get_url_branch(git_dir)
-                f.write('branch: %s\n' % branch)
-                f.write('url: %s\n' % url)
+                if branch != 'master':
+                    found['branch'] = branch
+                found['url'] = url
+                if not 'git' in found['url']:
+                    found['type'] = 'git'
             except Exception as e:
                 error('Could not locate url for %r: %s' % (git_dir, e))
                 
-    f.close()
-
+            append(found)
+    
+    
+    def mark():
+        mark.count += 1
+        markers = ['-','/','|','\\']
+        return markers[mark.count % len(markers)]
+      
+    mark.count = 0
+    
+    def log(s):
+        sys.stderr.write(format('%s %5d %s' % (mark(), mark.count, s)))
+        sys.stderr.write('\r');
+   
+    for repo in find_repos(dir, log=log, shallow=True):
+        consider(repo)
+   
+    if len(repolist) == 0:
+        fatal('No repos found in %r.' % dir)
+ 
+    with open(output,'w') as f:
+        for repo in repolist:
+            f.write('---\n')
+            yaml.dump(repo, f, default_flow_style=False)
+ 
 
 def get_url_branch(git_dir):
     repo = os.path.dirname(git_dir)
@@ -72,25 +105,20 @@ def get_url_branch(git_dir):
     return url, branch
     
 
+def find_repos(directory, log= lambda x: None, followlinks=False, shallow= True):
+    reasonable = shallow
+    resources = os.path.join(directory, RESOURCES)
+    if os.path.exists(resources):
+        yield resources
+        if reasonable: return
 
-def find_files(directory, pattern, verbose=False, followlinks=False):
-    for root, dirs, files in os.walk(directory, followlinks=followlinks):
-        if verbose:
-            print root
-            
-        for basename in files + dirs:
-            if fnmatch.fnmatch(basename, pattern):
-                filename = os.path.join(root, basename)
-                yield filename
-
-def find_repos(directory, verbose=False, followlinks=False):
     git_repo = os.path.join(directory, '.git')
     if os.path.exists(git_repo):
-            yield git_repo
+        yield git_repo
+        if reasonable: return
         
     for root, dirs, files in os.walk(directory, followlinks=followlinks):
-        if verbose:
-            print root
+        log(root)
         
         for dir in list(dirs):
             resources = os.path.join(root, dir, RESOURCES)
@@ -101,6 +129,7 @@ def find_repos(directory, verbose=False, followlinks=False):
                 git_repo = os.path.join(root, dir, '.git')
                 if os.path.exists(git_repo):
                     yield git_repo
-                
+                    if reasonable: dirs.remove(dir)
+                    
 if __name__ == '__main__':
     main()
