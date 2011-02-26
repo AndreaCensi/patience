@@ -10,7 +10,7 @@ setup(name='patience',
            'patience = patience.main:main',
            'patience_search = patience.patience_search:main',
            'patience2html = patience.patience2html:main'
-        ]
+        ]  
       }, 
 )
 
