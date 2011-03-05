@@ -15,6 +15,11 @@ def write_message(stream, r, m):
         stream.write('%s\n' % m)
     else:
         stream.write('%s: %s\n' % (name, m))
+        
+def write_console_status(s):
+    s = s.ljust(100) # TODO: add correct lengt
+    sys.stderr.write(s+'\r')
+    
     
 class Action(object):
     actions = {}
@@ -24,19 +29,24 @@ class Action(object):
         self.any_order = any_order
         
     def go(self, resources, force_sequential=False, 
-                 max_processes=3, stream=sys.stdout):
+                 max_processes=3, stream=sys.stdout, console_status=False):
         if not self.parallel or force_sequential:
-            return self.go_sequential(resources, stream)
+            return self.go_sequential(resources, stream, console_status=console_status)
         else:
             return self.go_parallel(resources, stream, 
                     any_order=self.any_order,
-                    max_processes=max_processes)
+                    max_processes=max_processes,
+                    console_status=console_status)
     
-    def go_sequential(self, resources, stream):
+    def go_sequential(self, resources, stream, console_status):
         results = {}
-        for r in resources:
-            # m = self.single_action_started(r)
-            # write_message(stream, r, m)
+        for i, r in enumerate(resources):
+
+            if console_status:
+                write_console_status("%3d/%d %s" % (i, len(resources), r))
+
+                # m = self.single_action_started(r)
+                # write_message(sys.stderr, r, m)
 
             try:
                 result = self.single_action(r)
@@ -56,7 +66,8 @@ class Action(object):
         return results
     
 
-    def go_parallel(self, resources, stream, any_order, max_processes):
+    def go_parallel(self, resources, stream, any_order, max_processes,
+        console_status=True):
 
         from multiprocessing import Pool, TimeoutError
         pool = Pool(processes=20)            
@@ -73,9 +84,8 @@ class Action(object):
             #print(" to write: %d" % len(to_write))
             #print(" r2message: %d" % len(r2messages))
             #print(" results:  %d" % len(results))
-
-                
-            sys.stderr.write("%3d to go (%3d to write %d)      \r" % 
+            if console_status:
+                sys.stderr.write("%3d to go (%3d to write %d)      \r" % 
                 (len(handles), len(r2messages), len(to_write)))
             for r, res in list(handles.items()):
                 try:

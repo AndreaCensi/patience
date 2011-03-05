@@ -93,7 +93,10 @@ def main():
     parser = OptionParser()
     parser.add_option("--config", help="Location of yaml configuration")
 
-    parser.add_option("--seq", help="Force sequential", default=False,
+    parser.add_option("-s", "--seq", help="Force sequential", default=False,
+                    action='store_true')
+
+    parser.add_option("-v", "--verbose", help="Write status messages", default=False,
                     action='store_true')
                 
 
@@ -128,7 +131,7 @@ def main():
         
     if command in Action.actions:
         action = Action.actions[command]
-        results = action.go(resources, force_sequential=options.seq, stream=stream)
+        results = action.go(resources, force_sequential=options.seq, stream=stream, console_status=options.verbose)
         
         if options.yaml:
             s = {'date': datetime.datetime.now(),
