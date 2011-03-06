@@ -139,6 +139,9 @@ class Fetch(Action):
                 return None
             
     def single_action(self, r):
+        if not r.is_downloaded():
+            raise ActionException('Not downloaded %s' % r)
+
         if r.config['type'] == 'git':
             return r.fetch()
         raise ActionException("Not implemented for %r" % r.config['type'])
@@ -155,6 +158,11 @@ class Merge(Action):
     def single_action_result_display(self, resource, result): pass
 
     def single_action(self, r):
+        if not r.is_downloaded():
+            raise ActionException('Not downloaded %s' % r)
+            
+        # TODO: add branch check
+        
         if r.something_to_merge() and r.simple_merge():
             r.merge()
                 
@@ -169,6 +177,11 @@ class Push(Action):
     def single_action_result_display(self, resource, result): pass
 
     def single_action(self, r):
+        if not r.is_downloaded():
+            raise ActionException('Not downloaded %s' % r)
+
+        # TODO: add branch check
+        
         if r.something_to_push() and r.simple_push():
             r.push()
 
@@ -223,10 +236,25 @@ def status2string(r, res):
     else:
         return None
 
+
 class Status(Action):
     
-    def __init__(self):
-        # Action.__init__(self, parallel=True, any_order=True)
+    def __init__(self): 
+        Action.__init__(self, parallel=True, any_order=False)
+
+    def single_action_starting(self, resource): pass
+
+    def single_action_result_display(self, resource, result):
+        if not isinstance(result, Exception):
+            return status2string(resource ,result)
+    
+    def single_action(self, r):
+        if not r.is_downloaded():
+            r.checkout()
+    
+class Status(Action):
+    
+    def __init__(self): 
         Action.__init__(self, parallel=True, any_order=False)
 
     def single_action_starting(self, resource):

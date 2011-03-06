@@ -143,15 +143,15 @@ def main():
             yaml.dump(s, sys.stdout, default_flow_style=False)
         return
 
-    if command == 'checkout':
-        for r in resources:
-            if not r.is_downloaded():
-                print 'Downloading %s...' % r
-                r.checkout()
-            else:
-                print 'Already downloaded %s.' % r                 
-               
-    elif command == 'pfetch':
+    # if command == 'checkout':
+    #         for r in resources:
+    #             if not r.is_downloaded():
+    #                 print 'Downloading %s...' % r
+    #                 r.checkout()
+    #             else:
+    #                 print 'Already downloaded %s.' % r                 
+    #                
+    if command == 'pfetch':
 
         from multiprocessing import Pool, TimeoutError
         pool = Pool(processes=10)            
