@@ -32,7 +32,7 @@ def main():
     tr.some_modified .num_modified { background-color: orange; }
     tr.missing  { background-color: red; }
     /* tr.some_untracked .num_untracked { background-color: red; } */
-    tr.some_to_push .to_push { background-color: orange; }
+    tr.some_to_push .to_push { background-color: yellow; }
     tr.some_to_merge .to_merge { background-color: #aaf; }
     /* TODO: add simple_merge/push */
     
