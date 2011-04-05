@@ -41,8 +41,10 @@ def system_cmd_result(
             cmd2args(cmd), 
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, 
+            #stderr=subprocess.STDOUT, 
+            
             cwd=cwd)
-    if 0:
+    if 1:
         stdout, stderr = p.communicate()
         p.wait()
     else:
@@ -58,16 +60,19 @@ def system_cmd_result(
             if stream:
                 next = stream.readline()
                 if not next:
+                    stream.close()
                     return False
                 lines.append(next)
                 return True
             else:
+                stream.close()
                 return False
                 
         # XXX: read all the lines
         while stderr_to_read or stdout_to_read:
             stderr_to_read = read_stream(p.stderr, stderr_lines)
-            stdout_to_read = read_stream(p.stdout, stdout_lines)
+            stdout_to_read = False 
+            #stdout_to_read = read_stream(p.stdout, stdout_lines)
             
             while stderr_lines:
                 l = stderr_lines.pop(0)
@@ -80,7 +85,9 @@ def system_cmd_result(
                 if display_stdout:
                     sys.stderr.write('%s   %s' % (display_prefix, l))
                 
+        stdout = p.stdout.read()
         p.wait()
+            
             
     ret = p.returncode 
     

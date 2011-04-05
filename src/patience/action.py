@@ -291,9 +291,8 @@ class Status(Action):
                 simple_push = r.simple_push()
             else: simple_push = None
 
-
                 
-        asdict =dict([(k, locals()[k]) for k in status_fields])
+        asdict = dict([(k, locals()[k]) for k in status_fields])
         return StatusResult(**asdict)
 
     def summary(self, resources, results):

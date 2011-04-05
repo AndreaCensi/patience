@@ -18,6 +18,8 @@ class Git(Resource):
 
     def run(self, cmd, cwd=None,errmsg=None): 
         try:
+            #if self.show_operations:
+            #    print(cmd)
             if cwd is None: 
                 cwd = self.destination
             res = system_cmd_result(cwd, cmd,
