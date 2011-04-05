@@ -63,6 +63,8 @@ class Resource:
         self.destination = config['dir']
         self.short_path = config.get('nick', get_friendly(self.destination))
         
+        if os.path.exists(os.path.join(self.destination, 'setup.py')):
+            self.config['install'] = 'setuptools'
 
     def is_downloaded(self):
         return os.path.exists(self.destination)
@@ -89,20 +91,23 @@ class Resource:
         pass
 
     def install(self):
+    
 
         install_type = self.config.get('install', None)
         if install_type is None:
-            print "Skipping %s" % self
-            return
+            self.badconf("No setup method known.")
 
         if install_type == 'setuptools':
-            system_cmd_fail(self.destination, 'python setup.py develop')
+            self.run('python setup.py develop')
         elif install_type == 'cmake':
+            # XXX: qui come va?
             system_cmd_fail(self.destination, 'cmake -DCMAKE_INSTALL_PREFIX=${BVENV_PREFIX} .')
-            system_cmd_fail(self.destination, 'make')
-        
+        elif install_type == 'make':
+            self.run('make')
+            # XXX:
             system_cmd_fail(self.destination, 'make install')
         
-        
         else:
-            raise Exception('Unknown install type "%s".' % install_type)
+            raise ActionException('Unknown install type %r.' % install_type)
+            
+            

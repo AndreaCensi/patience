@@ -6,7 +6,9 @@ from .git import Git
 from .resources import Resource
 
 from .logging import error 
-from .actions import Action
+from .action import Action
+from . import actions
+
 import datetime
 import sys
 import platform
@@ -96,10 +98,13 @@ def main():
     parser.add_option("-s", "--seq", help="Force sequential", default=False,
                     action='store_true')
 
-    parser.add_option("-v", "--verbose", help="Write status messages", default=False,
-                    action='store_true')
+    parser.add_option("-v", "--verbose", help="Write status messages",  
+                    default=False, action='store_true')
                 
-
+    parser.add_option("-V", help="Show git operations", 
+                     dest='show_operations', 
+                    default=False, action='store_true')
+    
     parser.add_option("--yaml", help="Write YAML output", default=False,
                     action='store_true')
 
@@ -131,7 +136,11 @@ def main():
         
     if command in Action.actions:
         action = Action.actions[command]
-        results = action.go(resources, force_sequential=options.seq, stream=stream, console_status=options.verbose)
+        results = action.go(resources, 
+            force_sequential=options.seq, 
+            stream=stream, 
+            console_status=options.verbose,
+            show_operations=options.show_operations)
         
         if options.yaml:
             s = {'date': datetime.datetime.now(),
@@ -142,15 +151,7 @@ def main():
                  'results': results}
             yaml.dump(s, sys.stdout, default_flow_style=False)
         return
-
-    # if command == 'checkout':
-    #         for r in resources:
-    #             if not r.is_downloaded():
-    #                 print 'Downloading %s...' % r
-    #                 r.checkout()
-    #             else:
-    #                 print 'Already downloaded %s.' % r                 
-    #                
+ 
     if command == 'pfetch':
 
         from multiprocessing import Pool, TimeoutError
@@ -180,10 +181,6 @@ def main():
                 print 'Updating %s' % r
 
             r.update()
-
-    elif command == 'install':
-        for r in resources:
-            r.install()
 
             
     elif command == 'tag':

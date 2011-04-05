@@ -29,9 +29,16 @@ class Action(object):
         self.any_order = any_order
         
     def go(self, resources, force_sequential=False, 
-                 max_processes=3, stream=sys.stdout, console_status=False):
+                 max_processes=3, stream=sys.stdout, 
+                 console_status=False,
+                 show_operations=False):
+                 
+        for r in resources:
+            r.show_operations = show_operations 
+            
         if not self.parallel or force_sequential:
-            return self.go_sequential(resources, stream, console_status=console_status)
+            return self.go_sequential(resources, stream,
+                     console_status=console_status )
         else:
             return self.go_parallel(resources, stream, 
                     any_order=self.any_order,
@@ -40,13 +47,10 @@ class Action(object):
     
     def go_sequential(self, resources, stream, console_status):
         results = {}
-        for i, r in enumerate(resources):
+        for i, r in enumerate(resources): 
 
             if console_status:
-                write_console_status("%3d/%d %s" % (i, len(resources), r))
-
-                # m = self.single_action_started(r)
-                # write_message(sys.stderr, r, m)
+                write_console_status("%3d/%d %s" % (i+1, len(resources), r))
 
             try:
                 result = self.single_action(r)
@@ -67,13 +71,13 @@ class Action(object):
     
 
     def go_parallel(self, resources, stream, any_order, max_processes,
-        console_status=True):
+        console_status ):
 
         from multiprocessing import Pool, TimeoutError
         pool = Pool(processes=20)            
         
         handles = {}
-        for r in resources:
+        for r in resources: 
             handles[r] = pool.apply_async(slave, [(self, r)])
 
         results = {}

@@ -1,5 +1,5 @@
 from .resources import Resource
-from .utils import system_output, system_cmd_fail, system_cmd_show, system_run
+from .utils import  system_cmd_result, system_cmd_show, CmdException
 
 from .structures import ActionException
 
@@ -8,25 +8,34 @@ class Git(Resource):
         Resource.__init__(self, config)
         self.url = config['url']
         self.branch = config.get('branch', 'master')
+        self.show_operations = False 
 
-    def checkout(self):    
-        system_cmd_fail('.', 'git clone %s %s' % (self.url, self.destination))
+    def checkout(self):
+        self.run(
+                ['git', 'clone', self.url, self.destination],
+                cwd='.' # the other was not created yet
+                )
 
-    def run(self, cmd, errmsg=None):
-        ret, stdout, stderr = system_run(self.destination, cmd)
-        if ret != 0:
+    def run(self, cmd, cwd=None,errmsg=None): 
+        try:
+            if cwd is None: 
+                cwd = self.destination
+            res = system_cmd_result(cwd, cmd,
+                                    raise_on_error=True,
+                                    display_stdout=self.show_operations,
+                                    display_stderr=self.show_operations,
+                                    display_prefix=self.short_path
+                                    )
+            return res.stdout
+        except CmdException as e:
             if errmsg:
                 e = '%s\n' % errmsg
             else:
                 e = ''
-            e += "Command %r returned %d." % (cmd, ret)
-            if stdout:
-                e += '\n--- output --- \n%s--- (end)' % stdout
-            if stderr:
-                e += '\n--- stderr --- \n%s--- (end)' % stderr
+                
+            e += '%s' % e
             raise ActionException(e)
-        return stdout
-        
+            
     def f(self,f,**args):
         ''' formats a string '''
         return f.format(branch=self.branch,**args)
@@ -37,7 +46,7 @@ class Git(Resource):
     
         
     def badconf(self, e):
-        raise ActionException("%s: %s" % (self, e))
+        raise ActionException(e)
 
     def fetch(self):
         self.run('git fetch')
@@ -66,7 +75,8 @@ class Git(Resource):
         return len(files)
     
     def something_to_push(self):
-        ''' Returns the number of commits that we can push to the remote branch.'''
+        ''' Returns the number of commits that we can push to the remote
+            branch.'''
         command = 'git log origin/{branch}..{branch} --no-merges --pretty=oneline'
         output = self.runf(command)
         commits = linesplit(output)
@@ -110,7 +120,7 @@ class Git(Resource):
                 except Exception as e:
                     print e
                     return
-                system_cmd_fail(self.destination, ['git', 'commit', '-a', '-m', msg])
+                self.run(self.destination, ['git', 'commit', '-a', '-m', msg])
     
     def push(self):
         if self.simple_push():
