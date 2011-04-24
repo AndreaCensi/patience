@@ -78,6 +78,7 @@ from optparse import OptionParser
 def load_resources(filename):
     curdir = os.path.dirname(filename)
     for config in yaml.load_all(open(filename)):
+	if config is None: continue
         config['from'] = filename
         sub = config.get('sub', None)
         if sub:
