@@ -40,9 +40,7 @@ def system_cmd_result(
     p = subprocess.Popen(
             cmd2args(cmd), 
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, 
-            #stderr=subprocess.STDOUT, 
-            
+            stderr=subprocess.PIPE ,
             cwd=cwd)
     if 1:
         stdout, stderr = p.communicate()

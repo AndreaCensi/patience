@@ -30,8 +30,6 @@ def get_friendly(path, use_environment=True): # TODO: make switch
             if v:
                 rules.append(('$%s'%k, v))
         
-    
-        
     # apply longest first
     rules.sort(key=lambda x: -len(x[1]))
     path = replace_variables(path, rules)
@@ -91,8 +89,6 @@ class Resource:
         pass
 
     def install(self):
-    
-
         install_type = self.config.get('install', None)
         if install_type is None:
             self.badconf("No setup method known.")

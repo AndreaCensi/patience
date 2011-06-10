@@ -11,17 +11,18 @@ class Git(Resource):
         self.show_operations = False 
 
     def checkout(self):
-        self.run(
-                ['git', 'clone', self.url, self.destination],
-                cwd='.' # the other was not created yet
+        self.run(['git', 'clone', self.url, self.destination],
+                    cwd='.' # the other was not created yet
                 )
 
     def run(self, cmd, cwd=None,errmsg=None): 
         try:
-            #if self.show_operations:
-            #    print(cmd)
             if cwd is None: 
                 cwd = self.destination
+                
+            if self.show_operations:
+               print('%-30s: %s' % (self.short_path, cmd))
+               
             res = system_cmd_result(cwd, cmd,
                                     raise_on_error=True,
                                     display_stdout=self.show_operations,
@@ -31,12 +32,15 @@ class Git(Resource):
             return res.stdout
         except CmdException as e:
             if errmsg:
-                e = '%s\n' % errmsg
+                s = '%s\n' % errmsg
             else:
-                e = ''
+                s = 'Command %r failed with error code %d.' % (cmd, e.res.ret)
+                if e.res.stdout:
+                    s += ' stdout: %r ' % e.res.stdout
+                if e.res.stderr:
+                    s += ' stderr: %r ' % e.res.stderr          
                 
-            e += '%s' % e
-            raise ActionException(e)
+            raise ActionException(s)
             
     def f(self,f,**args):
         ''' formats a string '''
