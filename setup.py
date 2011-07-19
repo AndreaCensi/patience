@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='patience',
-	version="0.3",
+	version="0.4",
       package_dir={'':'src'},
       packages=['patience'],
       install_requires=['pyyaml'],
