@@ -150,31 +150,37 @@ def main():
                  'config': config,
                  'resources': resources,
                  'results': results}
+            #yaml.safe_dump(s, sys.stdout, default_flow_style=False)
             yaml.dump(s, sys.stdout, default_flow_style=False)
         return
- 
-    if command == 'pfetch':
-
-        from multiprocessing import Pool, TimeoutError
-        pool = Pool(processes=10)            
         
-        results = {}
-        for r in resources:
-            results[r] = pool.apply_async(fetch, [r])
+    if command == 'list':
+        repos = [dict(dir=r.destination,url=r.url)  for r in resources]
+        yaml.dump(repos, sys.stdout, default_flow_style=False)
 
-        while results:
-            print "Still %s to go" % len(results)
-            for r, res in list(results.items()):
-                try:
-                    res.get(timeout=0.1)
-                    del results[r]
-                except TimeoutError:
-                    continue
-                except Exception as e:
-                    print "%s: Could not fetch: %s" % (r, e)
-                    del results[r]
-            
-        print "done" 
+    #  
+    # if command == 'pfetch':
+    # 
+    #     from multiprocessing import Pool, TimeoutError
+    #     pool = Pool(processes=10)            
+    #     
+    #     results = {}
+    #     for r in resources:
+    #         results[r] = pool.apply_async(fetch, [r])
+    # 
+    #     while results:
+    #         print "Still %s to go" % len(results)
+    #         for r, res in list(results.items()):
+    #             try:
+    #                 res.get(timeout=0.1)
+    #                 del results[r]
+    #             except TimeoutError:
+    #                 continue
+    #             except Exception as e:
+    #                 print "%s: Could not fetch: %s" % (r, e)
+    #                 del results[r]
+    #         
+    #     print "done" 
                      
     elif command == 'update':
         for r in resources:
