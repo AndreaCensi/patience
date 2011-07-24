@@ -6,3 +6,5 @@ install.sh
 .project
 .pydevproject
 *.py~
+*yaml
+out
