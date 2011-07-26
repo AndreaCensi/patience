@@ -156,31 +156,7 @@ def main():
         
     if command == 'list':
         repos = [dict(dir=r.destination,url=r.url)  for r in resources]
-        yaml.dump(repos, sys.stdout, default_flow_style=False)
-
-    #  
-    # if command == 'pfetch':
-    # 
-    #     from multiprocessing import Pool, TimeoutError
-    #     pool = Pool(processes=10)            
-    #     
-    #     results = {}
-    #     for r in resources:
-    #         results[r] = pool.apply_async(fetch, [r])
-    # 
-    #     while results:
-    #         print "Still %s to go" % len(results)
-    #         for r, res in list(results.items()):
-    #             try:
-    #                 res.get(timeout=0.1)
-    #                 del results[r]
-    #             except TimeoutError:
-    #                 continue
-    #             except Exception as e:
-    #                 print "%s: Could not fetch: %s" % (r, e)
-    #                 del results[r]
-    #         
-    #     print "done" 
+        yaml.dump(repos, sys.stdout, default_flow_style=False) 
                      
     elif command == 'update':
         for r in resources:
@@ -204,14 +180,14 @@ def main():
                 r.commit()
     else:
         raise Exception('Unknown command "%s".' % command)
+        # 
+        # def fetch(r):
+        #     if r.config['type'] == 'git':
+        #         print 'Fetching for %s' % r
+        #         res = r.fetch()
+        #         if res:  
+        #             print "fetched {dir}".format(dir=r)
         
-def fetch(r):
-    if r.config['type'] == 'git':
-        print 'Fetching for %s' % r
-        res = r.fetch()
-        if res:  
-            print "fetched {dir}".format(dir=r)
-
 
 if __name__ == '__main__':
     main()
