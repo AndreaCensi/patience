@@ -79,6 +79,9 @@ class Resource:
     def update(self):
         pass
         
+    def develop(self):
+        pass
+
     def current_revision(self):
         return None
 
@@ -103,6 +106,21 @@ class Resource:
             # XXX:
             system_cmd_fail(self.destination, 'make install')
         
+        else:
+            raise ActionException('Unknown install type %r.' % install_type)
+            
+    
+    def unittests(self):
+        install_type = self.config.get('install', None)
+        if install_type is None:
+            self.badconf("No setup method known.")
+
+        if install_type == 'setuptools':
+            self.run('python setup.py nosetests')
+        elif install_type == 'cmake':
+            pass
+        elif install_type == 'make':
+            pass        
         else:
             raise ActionException('Unknown install type %r.' % install_type)
             

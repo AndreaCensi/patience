@@ -59,6 +59,9 @@ def main():
         </tr>
     """ % ts)
     for r in data['resources']:
+        #if not isinstance(status, patience.action.StatusResult):
+
+
         short_path = r.short_path
         status  = data['results'][short_path]
         t="""
@@ -79,6 +82,8 @@ def main():
     
         classes = ["resource"]
         
+
+
         if not status.present:
             classes.append('missing')
         else:

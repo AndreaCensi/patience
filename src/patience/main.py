@@ -165,7 +165,6 @@ def main():
 
             r.update()
 
-            
     elif command == 'tag':
         h = []
         for r in resources:
