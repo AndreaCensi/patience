@@ -1,4 +1,3 @@
-#!/usr/bin/env python 
 import os, yaml
 
 from .subversion import Subversion
@@ -7,7 +6,7 @@ from .resources import Resource
 
 from .logging import error 
 from .action import Action
-from . import actions
+from .actions import *
 
 import datetime
 import sys

@@ -1,7 +1,11 @@
 from setuptools import setup
 
 setup(name='patience',
-	version="0.4",
+      author="Andrea Censi",
+      author_email="andrea@cds.caltech.edu",
+      url='http://github.com/AndreaCensi/patience',
+    	version="1.0",
+      description="A command line tool for managing multiple git repositories.",
       package_dir={'':'src'},
       packages=['patience'],
       install_requires=['pyyaml'],
