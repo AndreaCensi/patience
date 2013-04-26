@@ -12,16 +12,16 @@ class Git(Resource):
 
     def checkout(self):
         self.run(['git', 'clone', self.url, self.destination],
-                    cwd='.' # the other was not created yet
+                    cwd='.'  # the other was not created yet
                 )
 
-    def run(self, cmd, cwd=None,errmsg=None): 
+    def run(self, cmd, cwd=None, errmsg=None): 
         try:
             if cwd is None: 
                 cwd = self.destination
                 
             if self.show_operations:
-               print('%-30s: %s' % (self.short_path, cmd))
+                print('%-30s: %s' % (self.short_path, cmd))
                
             res = system_cmd_result(cwd, cmd,
                                     raise_on_error=True,
@@ -42,13 +42,13 @@ class Git(Resource):
                 
             raise ActionException(s)
             
-    def f(self,f,**args):
+    def f(self, f, **args):
         ''' formats a string '''
-        return f.format(branch=self.branch,**args)
+        return f.format(branch=self.branch, **args)
 
-    def runf(self,f,**args):
+    def runf(self, f, **args):
         ''' Formats and runs a command. '''
-        return self.run(self.f(f,**args))
+        return self.run(self.f(f, **args))
     
         
     def badconf(self, e):
@@ -75,7 +75,7 @@ class Git(Resource):
         return len(files)
 
     def num_untracked(self):
-        command = 'git ls-files --others --exclude-standard' #' --directory'
+        command = 'git ls-files --others --exclude-standard'  # ' --directory'
         output = self.run(command)
         files = linesplit(output)
         return len(files)
@@ -97,8 +97,8 @@ class Git(Resource):
     
     def simple_merge(self):
         ''' Checks that our branch can be fast forwarded. ''' 
-        rev =  self.runf('git rev-parse {branch}').strip()
-        base = self.runf('git merge-base {rev} origin/{branch}',rev=rev)
+        rev = self.runf('git rev-parse {branch}').strip()
+        base = self.runf('git merge-base {rev} origin/{branch}', rev=rev)
         if rev == base.strip():
             return True
         else:
@@ -116,7 +116,7 @@ class Git(Resource):
     def commit(self):
         if self.num_modified():
             n = self.num_untracked()
-            if n > 0 :
+            if n > 0:
                 self.badcond("Cannot commit; there are %s untracked files." % n)
             else: 
                 # TODO
@@ -141,5 +141,5 @@ class Git(Resource):
 
 def linesplit(s):
     ''' Splits a string in lines; removes empty. '''
-    return filter(lambda x:x, s.split('\n'))
+    return filter(lambda x: x, s.split('\n'))
     

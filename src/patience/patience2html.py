@@ -46,7 +46,7 @@ def main():
     assert data['command'] == 'status'
     
     d = str(data['date'])[:16]
-    ts = """ %s @ %s """ %  ( data['hostname'], d)
+    ts = """ %s @ %s """ % (data['hostname'], d)
     
     f.write("""<table>
     
@@ -60,12 +60,12 @@ def main():
         </tr>
     """ % ts)
     for r in data['resources']:
-        #if not isinstance(status, patience.action.StatusResult):
+        # if not isinstance(status, patience.action.StatusResult):
 
 
         short_path = r.short_path
-        status  = data['results'][short_path]
-        t="""
+        status = data['results'][short_path]
+        t = """
         <tr class="{tr_class}">
             <td class="name">{name}</td>
             <td class="number num_modified">{num_modified}</td>
@@ -87,7 +87,7 @@ def main():
         if isinstance(status, Exception):
             classes.append('exception') 
             invalid = '-'
-            s = t.format(name=short_path, 
+            s = t.format(name=short_path,
                         num_modified=invalid,
                         num_untracked=invalid,
                         to_push=invalid,
@@ -122,10 +122,11 @@ def main():
                 if not (status.num_modified or 
                     status.num_untracked or
                     status.to_merge or 
-                    status.to_push): classes.append('clean')
+                    status.to_push): 
+                    classes.append('clean')
 
                 
-            s = t.format(name=short_path, 
+            s = t.format(name=short_path,
                         num_modified=wrap(status.num_modified),
                         num_untracked=wrap(status.num_untracked),
                         to_push=wrap(status.to_push),
@@ -139,5 +140,5 @@ def main():
 
     f.write("""</body></html>""")
     
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

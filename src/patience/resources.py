@@ -1,5 +1,6 @@
 import os
 from .utils import system_cmd_fail
+from patience.structures import ActionException
 
 def replace_variables(path, rules):
     for k, v in rules:
@@ -8,7 +9,7 @@ def replace_variables(path, rules):
             path = path.replace(v, k)
     return path
 
-def get_friendly(path, use_environment=True): # TODO: make switch
+def get_friendly(path, use_environment=True):  # TODO: make switch
     original = path
     options = []
     
@@ -17,7 +18,7 @@ def get_friendly(path, use_environment=True): # TODO: make switch
     home = os.path.expanduser('~')
     
     rules = []
-    rules.append( ('~', os.path.expanduser('~')) ) 
+    rules.append(('~', home)) 
     
     if use_environment:
         envs = dict(os.environ)
@@ -28,18 +29,19 @@ def get_friendly(path, use_environment=True): # TODO: make switch
     
         for k, v in envs.items():
             if v:
-                rules.append(('$%s'%k, v))
+                rules.append(('$%s' % k, v))
         
     # apply longest first
-    rules.sort(key=lambda x: -len(x[1]))
+    rules.sort(key=lambda x: (-len(x[1])))
     path = replace_variables(path, rules)
     
     options.append(path)
 
     weight_doubledot = 5
+    
     def score(s):
         # penalize '..' a lot
-        s = s.replace('..','*' * weight_doubledot)
+        s = s.replace('..', '*' * weight_doubledot)
         return len(s)
         
     options.sort(key=score)
@@ -47,7 +49,7 @@ def get_friendly(path, use_environment=True): # TODO: make switch
     if False:
         print('Options for %s' % original)
         for o in options:
-            print( '- %4d %s' % (score(o), o))
+            print('- %4d %s' % (score(o), o))
         
     result = options[0]
     
@@ -80,7 +82,12 @@ class Resource:
         pass
         
     def develop(self):
-        pass
+        install_type = self.config.get('install', None)
+        if install_type is None:
+            self.badconf("No setup method known.")
+
+        if install_type == 'setuptools':
+            self.run('python setup.py develop')
 
     def current_revision(self):
         return None

@@ -1,13 +1,14 @@
-import sys, subprocess
-from collections import namedtuple
+import sys
+import subprocess
 
 def cmd2args(s):
     ''' if s is a list, leave it like that; otherwise split()'''
     if isinstance(s, list):
         return s
-    elif isinstance(s,str):
+    elif isinstance(s, str):
         return s.split() 
-    else: assert False
+    else: 
+        assert False
 
 
 class CmdResult(object):
@@ -19,16 +20,16 @@ class CmdResult(object):
         self.stderr = stderr
         
     def format(self):
-        return format(self.cwd,self.cmd,self.ret,self.stdout,self.stderr)
+        return result_format(self.cwd, self.cmd, self.ret, self.stdout, self.stderr)
     
     
 class CmdException(Exception):
     def __init__(self, cmd_result):
-        Exception.__init__(self,cmd_result.format())
+        Exception.__init__(self, cmd_result.format())
         self.res = cmd_result
         
 def system_cmd_result(
-    cwd, cmd, 
+    cwd, cmd,
     display_stdout=False,
     display_stderr=False,
     raise_on_error=False,
@@ -38,15 +39,15 @@ def system_cmd_result(
         display_prefix = '%s %s' % (cwd, cmd)
     
     p = subprocess.Popen(
-            cmd2args(cmd), 
+            cmd2args(cmd),
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE ,
+            stderr=subprocess.PIPE,
             cwd=cwd)
     if 1:
         stdout, stderr = p.communicate()
         p.wait()
     else:
-        #p.stdin.close()
+        # p.stdin.close()
         stderr = ''
         stdout = ''
         stderr_lines = []
@@ -56,8 +57,8 @@ def system_cmd_result(
         
         def read_stream(stream, lines):
             if stream:
-                next = stream.readline()
-                if not next:
+                nexti = stream.readline()
+                if not nexti:
                     stream.close()
                     return False
                 lines.append(next)
@@ -70,7 +71,7 @@ def system_cmd_result(
         while stderr_to_read or stdout_to_read:
             stderr_to_read = read_stream(p.stderr, stderr_lines)
             stdout_to_read = False 
-            #stdout_to_read = read_stream(p.stdout, stdout_lines)
+            # stdout_to_read = read_stream(p.stdout, stdout_lines)
             
             while stderr_lines:
                 l = stderr_lines.pop(0)
@@ -89,7 +90,7 @@ def system_cmd_result(
             
     ret = p.returncode 
     
-    res = CmdResult(cwd,cmd,ret,stdout,stderr)
+    res = CmdResult(cwd, cmd, ret, stdout, stderr)
     
     if raise_on_error:
         if res.ret != 0:
@@ -100,16 +101,16 @@ def system_cmd_result(
 
 def system_cmd_show(cwd, cmd): 
     ''' Display command, raise exception. '''
-    res = system_cmd_result(
-            cwd,cmd,
+    system_cmd_result(
+            cwd, cmd,
             display_stdout=True,
             display_stderr=True,
             raise_on_error=True)
         
 def system_cmd(cwd, cmd):
     ''' Do not output; return value. '''
-    res = system_cmd_result(    
-            cwd,cmd,
+    res = system_cmd_result(
+            cwd, cmd,
             display_stdout=False,
             display_stderr=False,
             raise_on_error=False)
@@ -118,7 +119,7 @@ def system_cmd(cwd, cmd):
 def system_run(cwd, cmd):
     ''' Gets the output of a command,  raise exception if it failes '''
     res = system_cmd_result(
-            cwd,cmd,
+            cwd, cmd,
             display_stdout=False,
             display_stderr=False,
             raise_on_error=True)
@@ -130,14 +131,14 @@ system_output = system_run
     
 def wrap(header, s, N=30):
     header = '  ' + header + '  '
-    l1 = '-'*N +  header + '-'*N
-    l2 = '-'*N +'-'*len(header) + '-'*N
+    l1 = '-' * N + header + '-' * N
+    l2 = '-' * N + '-' * len(header) + '-' * N
     return  l1 + '\n' + s + '\n' + l2
 
-def format(cwd, cmd, ret, stdout=None, stderr=None):
+def result_format(cwd, cmd, ret, stdout=None, stderr=None):
     msg = ('Command:\n\t{cmd}\n'
            'in directory:\n\t{cwd}\nfailed with error {ret}').format(
-            cwd=cwd,cmd=cmd,ret=ret
+            cwd=cwd, cmd=cmd, ret=ret
            )
     if stdout is not None:
         msg += '\n' + wrap('stdout', stdout)

@@ -1,5 +1,6 @@
-#!/usr/bin/env python
-import  fnmatch, sys, os
+#!/usr/bin/env python 
+import sys
+import os
 import yaml
 
 from .utils  import system_output
@@ -8,34 +9,36 @@ from .logging import error, info, fatal
 RESOURCES = 'resources.yaml'
 
 def main():
-    if len(sys.argv)== 1:
-        dir = '.'
+    if len(sys.argv) == 1:
+        dirname = '.'
     else:
-        dir = sys.argv[1]
+        dirname = sys.argv[1]
 
-    output = os.path.join(dir, RESOURCES)
+    output = os.path.join(dirname, RESOURCES)
     if os.path.exists(output):
         raise Exception('Output file %s already exist.' % output)
     
-    def format(s):
-        return s.ljust(80)[:80]
+    cols = 80
+    
+    def format_string(s):
+        return s.ljust(cols)[:cols]
     
     repolist = []
+    
     def append(r):
-        cols = 80
         if 'sub' in r:
-            info(format("Found sub in: %s" % repo))
+            info(format_string("Found sub in: %s" % repo))
         elif 'dir' in r:
-            info(format('Found git in: %s' % repo))
+            info(format_string('Found git in: %s' % repo))
         repolist.append(r)
         
     def consider(repo):
         if RESOURCES in repo:
-            append({'sub':  os.path.relpath(repo, dir)})
+            append({'sub': os.path.relpath(repo, dirname)})
             
         if '.git' in repo:
             git_dir = repo
-            destination = os.path.relpath(os.path.dirname(git_dir), dir)
+            destination = os.path.relpath(os.path.dirname(git_dir), dirname)
             found = {'dir': destination}
             info('Found git in: %s' % found['dir'])
                 
@@ -54,22 +57,22 @@ def main():
     
     def mark():
         mark.count += 1
-        markers = ['-','/','|','\\']
+        markers = ['-', '/', '|', '\\']
         return markers[mark.count % len(markers)]
       
     mark.count = 0
     
     def log(s):
-        sys.stderr.write(format('%s %5d %s' % (mark(), mark.count, s)))
-        sys.stderr.write('\r');
+        sys.stderr.write(format_string('%s %5d %s' % (mark(), mark.count, s)))
+        sys.stderr.write('\r')
    
-    for repo in find_repos(dir, log=log, shallow=True):
+    for repo in find_repos(dirname, log=log, shallow=True):
         consider(repo)
    
     if len(repolist) == 0:
-        fatal('No repos found in %r.' % dir)
+        fatal('No repos found in %r.' % dirname)
  
-    with open(output,'w') as f:
+    with open(output, 'w') as f:
         for repo in repolist:
             f.write('---\n')
             yaml.dump(repo, f, default_flow_style=False)
@@ -105,31 +108,34 @@ def get_url_branch(git_dir):
     return url, branch
     
 
-def find_repos(directory, log= lambda x: None, followlinks=False, shallow= True):
+def find_repos(directory, log=lambda _: None, followlinks=False, shallow=True):
     reasonable = shallow
     resources = os.path.join(directory, RESOURCES)
     if os.path.exists(resources):
         yield resources
-        if reasonable: return
+        if reasonable: 
+            return
 
     git_repo = os.path.join(directory, '.git')
     if os.path.exists(git_repo):
         yield git_repo
-        if reasonable: return
+        if reasonable: 
+            return
         
-    for root, dirs, files in os.walk(directory, followlinks=followlinks):
+    for root, dirs, _ in os.walk(directory, followlinks=followlinks):
         log(root)
         
-        for dir in list(dirs):
-            resources = os.path.join(root, dir, RESOURCES)
+        for dirname in list(dirs):
+            resources = os.path.join(root, dirname, RESOURCES)
             if os.path.exists(resources):
                 yield resources
-                dirs.remove(dir)
+                dirs.remove(dirname)
             else:
-                git_repo = os.path.join(root, dir, '.git')
+                git_repo = os.path.join(root, dirname, '.git')
                 if os.path.exists(git_repo):
                     yield git_repo
-                    if reasonable: dirs.remove(dir)
+                    if reasonable: 
+                        dirs.remove(dirname)
                     
 if __name__ == '__main__':
     main()

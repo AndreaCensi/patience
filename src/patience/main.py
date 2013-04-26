@@ -1,4 +1,5 @@
-import os, yaml
+import os
+import yaml
 
 from .subversion import Subversion
 from .git import Git
@@ -6,7 +7,7 @@ from .resources import Resource
 
 from .logging import error 
 from .action import Action
-from .actions import *
+from . import actions  # @UnusedImport
 
 import datetime
 import sys
@@ -27,15 +28,15 @@ def instantiate(config, base_dir='.'):
         raise ConfigException('Missing key "url".', config)
         
     if not any([x in config for x in ['dir', 'destination']]):
-        raise ConfigException('Missing key "dir".',  config)
+        raise ConfigException('Missing key "dirname".', config)
     
-    dir = config.get('dir', config.get('destination'))
-    dir = os.path.expandvars(dir)
-    dir = os.path.expanduser(dir)
-    dir = os.path.join(base_dir, dir)
-    dir = os.path.abspath(dir)
-    dir = os.path.realpath(dir)
-    config['dir'] = dir                 
+    dirname = config.get('dir', config.get('destination'))
+    dirname = os.path.expandvars(dirname)
+    dirname = os.path.expanduser(dirname)
+    dirname = os.path.join(base_dir, dirname)
+    dirname = os.path.abspath(dirname)
+    dirname = os.path.realpath(dirname)
+    config['dir'] = dirname                 
                                              
     if not 'type' in config:
         url = config['url']
@@ -58,26 +59,27 @@ def instantiate(config, base_dir='.'):
     else:
         raise ConfigException('Uknown resource type.', config)
 
-def find_configuration(dir=os.path.curdir, name='resources.yaml'):
+def find_configuration(dirname=os.path.curdir, name='resources.yaml'):
     while True:
-        dir = os.path.realpath(dir)
-        config = os.path.join(dir, name)
+        dirname = os.path.realpath(dirname)
+        config = os.path.join(dirname, name)
          
         if os.path.exists(config):
             return config
         
-        parent = os.path.dirname(dir)
-        if parent == dir: # reached /
+        parent = os.path.dirname(dirname)
+        if parent == dirname:  # reached /
             raise Exception('Could not find configuration "%s".' % name)
         
-        dir = parent
+        dirname = parent
         
 from optparse import OptionParser
 
 def load_resources(filename):
     curdir = os.path.dirname(filename)
     for config in yaml.load_all(open(filename)):
-	if config is None: continue
+        if config is None:
+            continue
         config['from'] = filename
         sub = config.get('sub', None)
         if sub:
@@ -98,17 +100,17 @@ def main():
     parser.add_option("-s", "--seq", help="Force sequential", default=False,
                     action='store_true')
 
-    parser.add_option("-v", "--verbose", help="Write status messages",  
+    parser.add_option("-v", "--verbose", help="Write status messages",
                     default=False, action='store_true')
                 
-    parser.add_option("-V", help="Show git operations", 
-                     dest='show_operations', 
+    parser.add_option("-V", help="Show git operations",
+                     dest='show_operations',
                     default=False, action='store_true')
     
     parser.add_option("--yaml", help="Write YAML output", default=False,
                     action='store_true')
 
-    (options, args) = parser.parse_args() #@UnusedVariable
+    (options, args) = parser.parse_args()  # @UnusedVariable
 
     if options.config:
         config = options.config
@@ -136,9 +138,9 @@ def main():
         
     if command in Action.actions:
         action = Action.actions[command]
-        results = action.go(resources, 
-            force_sequential=options.seq, 
-            stream=stream, 
+        results = action.go(resources,
+            force_sequential=options.seq,
+            stream=stream,
             console_status=options.verbose,
             show_operations=options.show_operations)
         
@@ -149,12 +151,12 @@ def main():
                  'config': config,
                  'resources': resources,
                  'results': results}
-            #yaml.safe_dump(s, sys.stdout, default_flow_style=False)
+            # yaml.safe_dump(s, sys.stdout, default_flow_style=False)
             yaml.dump(s, sys.stdout, default_flow_style=False)
         return
         
     if command == 'list':
-        repos = [dict(dir=r.destination,url=r.url)  for r in resources]
+        repos = [dict(dir=r.destination, url=r.url)  for r in resources]
         yaml.dump(repos, sys.stdout, default_flow_style=False) 
                      
     elif command == 'update':

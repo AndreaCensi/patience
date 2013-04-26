@@ -9,7 +9,8 @@ def slave(task):
     
     
 def write_message(stream, r, m):
-    if not m: return
+    if not m: 
+        return
     name = '%s' % r
     if name in m:
         stream.write('%s\n' % m)
@@ -17,8 +18,8 @@ def write_message(stream, r, m):
         stream.write('%s: %s\n' % (name, m))
         
 def write_console_status(s):
-    s = s.ljust(100) # TODO: add correct lengt
-    sys.stderr.write(s+'\r')
+    s = s.ljust(100)  # TODO: add correct lengt
+    sys.stderr.write(s + '\r')
     
     
 class Action(object):
@@ -28,8 +29,8 @@ class Action(object):
         self.parallel = parallel
         self.any_order = any_order
         
-    def go(self, resources, force_sequential=False, 
-                 max_processes=3, stream=sys.stdout, 
+    def go(self, resources, force_sequential=False,
+                 max_processes=3, stream=sys.stdout,
                  console_status=False,
                  show_operations=False):
                  
@@ -38,9 +39,9 @@ class Action(object):
             
         if not self.parallel or force_sequential:
             return self.go_sequential(resources, stream,
-                     console_status=console_status )
+                     console_status=console_status)
         else:
-            return self.go_parallel(resources, stream, 
+            return self.go_parallel(resources, stream,
                     any_order=self.any_order,
                     max_processes=max_processes,
                     console_status=console_status)
@@ -50,7 +51,7 @@ class Action(object):
         for i, r in enumerate(resources): 
 
             if console_status:
-                write_console_status("%3d/%d %s" % (i+1, len(resources), r))
+                write_console_status("%3d/%d %s" % (i + 1, len(resources), r))
 
             try:
                 result = self.single_action(r)
@@ -65,16 +66,17 @@ class Action(object):
             
         if stream:
             m3 = self.summary(resources, results)
-            if m3: stream.write('%s\n' % m3)
+            if m3: 
+                stream.write('%s\n' % m3)
     
         return results
     
 
     def go_parallel(self, resources, stream, any_order, max_processes,
-        console_status ):
+        console_status):
 
         from multiprocessing import Pool, TimeoutError
-        pool = Pool(processes=20)            
+        pool = Pool(processes=max_processes)            
         
         handles = {}
         for r in resources: 
@@ -84,10 +86,10 @@ class Action(object):
         r2messages = {}
         to_write = list(resources)
         while handles:
-            #print("handles: %d" % len(handles))
-            #print(" to write: %d" % len(to_write))
-            #print(" r2message: %d" % len(r2messages))
-            #print(" results:  %d" % len(results))
+            # print("handles: %d" % len(handles))
+            # print(" to write: %d" % len(to_write))
+            # print(" r2message: %d" % len(r2messages))
+            # print(" results:  %d" % len(results))
             if console_status:
                 sys.stderr.write("%3d to go (%3d to write %d)      \r" % 
                 (len(handles), len(r2messages), len(to_write)))
@@ -109,16 +111,17 @@ class Action(object):
 
             while to_write and to_write[0] in r2messages:
                 which = to_write[0]
-		r = to_write.pop(to_write.index(which))
+                r = to_write.pop(to_write.index(which))
                 m = r2messages[r]
                 del r2messages[r]
                 write_message(stream, r, m)
-	if stream:
-        	m3 = self.summary(resources, results)
-        	if m3: stream.write('%s\n' % m3)
+                
+        if stream:
+            m3 = self.summary(resources, results)
+            if m3:
+                stream.write('%s\n' % m3)
 
-
-    def summary(self, resources, results):
+    def summary(self, resources, results):  # @UnusedVariable
         s = ''
         for path, res in results.items():
             if isinstance(res, Exception):
@@ -133,7 +136,7 @@ class Fetch(Action):
     def __init__(self):
         Action.__init__(self, parallel=True, any_order=True)
 
-    def single_action_result_display(self, resource, result):
+    def single_action_result_display(self, resource, result):  # @UnusedVariable
         if isinstance(result, Exception):
             return "%s" % result
         else:
@@ -158,8 +161,11 @@ class Merge(Action):
     def __init__(self):
         Action.__init__(self, parallel=True, any_order=True)
 
-    def single_action_started(self, resource): pass
-    def single_action_result_display(self, resource, result): pass
+    def single_action_started(self, resource): 
+        pass
+    
+    def single_action_result_display(self, resource, result): 
+        pass
 
     def single_action(self, r):
         if not r.is_downloaded():
@@ -177,8 +183,11 @@ class Push(Action):
     def __init__(self):
         Action.__init__(self, parallel=True, any_order=True)
 
-    def single_action_started(self, resource): pass
-    def single_action_result_display(self, resource, result): pass
+    def single_action_started(self, resource): 
+        pass
+    
+    def single_action_result_display(self, resource, result): 
+        pass
 
     def single_action(self, r):
         if not r.is_downloaded():
@@ -196,7 +205,7 @@ Action.actions['push'] = Push()
         
 status_fields = ('present num_modified num_untracked to_push simple_push '
                 'to_merge simple_merge').split()
-StatusResult = namedtuple('StatusResult',status_fields)
+StatusResult = namedtuple('StatusResult', status_fields)
 
 
 def status2string(r, res):
@@ -246,9 +255,11 @@ class Checkout(Action):
     def __init__(self): 
         Action.__init__(self, parallel=False, any_order=False)
 
-    def single_action_starting(self, resource): pass
+    def single_action_starting(self, resource): 
+        pass
 
-    def single_action_result_display(self, resource, result): pass
+    def single_action_result_display(self, resource, result): 
+        pass
     
     def single_action(self, r):
         if not r.is_downloaded():
@@ -261,12 +272,12 @@ class Status(Action):
     def __init__(self): 
         Action.__init__(self, parallel=True, any_order=False)
 
-    def single_action_starting(self, resource):
+    def single_action_starting(self, resource):  # @UnusedVariable
         return None
 
     def single_action_result_display(self, resource, result):
         if not isinstance(result, Exception):
-            return status2string(resource ,result)
+            return status2string(resource, result)
     
     def single_action(self, r):
         
@@ -286,10 +297,12 @@ class Status(Action):
             to_merge = r.something_to_merge()
             if to_merge: 
                 simple_merge = r.simple_merge()
-            else: simple_merge = None
+            else: 
+                simple_merge = None
             if to_push: 
                 simple_push = r.simple_push()
-            else: simple_push = None
+            else: 
+                simple_push = None
 
                 
         asdict = dict([(k, locals()[k]) for k in status_fields])
