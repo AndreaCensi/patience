@@ -57,14 +57,21 @@ def get_friendly(path, use_environment=True):  # TODO: make switch
 
     return result
 
-class Resource: 
+class Resource(object): 
     def __init__(self, config):
         self.config = config
         self.destination = config['dir']
+        
+        if not os.path.isabs(self.destination):
+            msg = 'Expected all abspath %r' % config
+            raise Exception(msg)
         self.short_path = config.get('nick', get_friendly(self.destination))
         
         if os.path.exists(os.path.join(self.destination, 'setup.py')):
             self.config['install'] = 'setuptools'
+
+        if not os.path.exists(self.destination):
+            print('Resource warning: %r does not exist %r' % (self.destination, self.config))
 
     def is_downloaded(self):
         return os.path.exists(self.destination)
