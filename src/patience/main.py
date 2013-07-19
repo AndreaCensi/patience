@@ -1,17 +1,16 @@
 from . import actions  # @UnusedImport
 from .action import Action
 from .git import Git
-from .logging import error
 from .resources import Resource
 from .subversion import Subversion
 from optparse import OptionParser
+from patience import logger
 import datetime
 import os
 import platform
 import sys
 import yaml
-
-
+from .visualization import error
 
 
 
@@ -151,8 +150,10 @@ def load_resources_patience(filename):
         sub = config.get('sub', None)
         if sub:
             f = os.path.join(curdir, sub)
+            
             if not os.path.exists(f):
-                msg = ('Could not load %s.' % f)
+                msg = ('Could not load sub %s.' % f)
+                logger.error(msg)
                 raise Exception(msg)
             
             if os.path.isdir(f):
