@@ -12,8 +12,6 @@ import sys
 import yaml
 from .visualization import error
 
-
-
 class ConfigException(Exception):
     def __init__(self, error, config):
         self.error = error
@@ -113,30 +111,30 @@ def find_configuration(dirname=os.path.curdir):
         dirname = parent
         
 
-def load_resources(filename):
+def load_resources(filename, errors=[]):
     basename = os.path.basename(filename)
     if 'resources.yaml' in basename:
         # print('loading %r' % filename)
-        for x in load_resources_patience(filename):
+        for x in load_resources_patience(filename, errors):
             yield x
         return
     
     if '.rosinstall' in basename:
-        for x in load_resources_rosinstall(filename):
+        for x in load_resources_rosinstall(filename, errors):
             yield x
         return
     
     msg = 'Strange basename %r' % basename
     assert False, msg
     
-def load_resources_rosinstall(filename):
+def load_resources_rosinstall(filename, errors=[]):
     entries = list(yaml.load_all(open(filename)))[0]
     for entry in entries:
         i = instance_rosinstall_entry(entry, os.path.dirname(filename))
         if i is not None:
             yield i
     
-def load_resources_patience(filename):
+def load_resources_patience(filename, errors=[]):
     curdir = os.path.dirname(filename)
     
     contents = list(yaml.load_all(open(filename)))
@@ -153,8 +151,8 @@ def load_resources_patience(filename):
             
             if not os.path.exists(f):
                 msg = ('Could not load sub %s.' % f)
-                logger.error(msg)
-                raise Exception(msg)
+                errors.append(Exception(msg))
+                continue
             
             if os.path.isdir(f):
                 files = find_configuration_in_dir(f)
@@ -163,12 +161,12 @@ def load_resources_patience(filename):
                 
             try:
                 for ff in files:
-                    for x in load_resources(ff):
+                    for x in load_resources(ff, errors):
                         yield x
                 
             except Exception as e:
-                error('Could not load %r: %s' % (sub, e))
-                raise
+                msg = ('Could not load %r: %s' % (sub, e))
+                errors.append(Exception(msg))
             
         else:
             yield instantiate(config, curdir)
@@ -199,9 +197,13 @@ def main():
         configs = list(find_configuration())
         
     resources = []
+    errors = []
     for c in configs:
-        resources.extend(load_resources(c)) 
+        resources.extend(load_resources(c, errors)) 
     
+    for e in errors:
+        print('error: %s' % e)
+        
     if len(args) == 0:
         raise Exception('Please provide command.')
     if len(args) > 1:
