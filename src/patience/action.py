@@ -1,27 +1,10 @@
-import sys
-from collections import namedtuple
-
 from .structures import ActionException
+import sys
 
-def slave(task):
-    action, resource = task
-    return action.single_action(resource)
-    
-    
-def write_message(stream, r, m):
-    if not m: 
-        return
-    name = '%s' % r
-    if name in m:
-        stream.write('%s\n' % m)
-    else:
-        stream.write('%s: %s\n' % (name, m))
-        
-def write_console_status(s):
-    s = s.ljust(100)  # TODO: add correct lengt
-    sys.stderr.write(s + '\r')
-    
-    
+
+__all__ = ['Action']
+
+
 class Action(object):
     actions = {}
     
@@ -129,190 +112,27 @@ class Action(object):
                 s += '{0:<30}: {1}\n'.format(path, e)
         return s
         
+# Load actions 
+from . import actions  # @UnusedImport
 
-        
-class Fetch(Action):
     
-    def __init__(self):
-        Action.__init__(self, parallel=True, any_order=True)
 
-    def single_action_result_display(self, resource, result):  # @UnusedVariable
-        if isinstance(result, Exception):
-            return "%s" % result
-        else:
-            if result:
-                return "fetched: %s" % result
-            else:
-                return None
-            
-    def single_action(self, r):
-        if not r.is_downloaded():
-            raise ActionException('Not downloaded %s' % r)
 
-        if r.config['type'] == 'git':
-            return r.fetch()
-        raise ActionException("Not implemented for %r" % r.config['type'])
-
-Action.actions['fetch'] = Fetch()
-
-        
-class Merge(Action):
+def slave(task):
+    action, resource = task
+    return action.single_action(resource)
     
-    def __init__(self):
-        Action.__init__(self, parallel=True, any_order=True)
-
-    def single_action_started(self, resource): 
-        pass
     
-    def single_action_result_display(self, resource, result): 
-        pass
-
-    def single_action(self, r):
-        if not r.is_downloaded():
-            raise ActionException('Not downloaded %s' % r)
-            
-        # TODO: add branch check
-        
-        if r.something_to_merge() and r.simple_merge():
-            r.merge()
-                
-Action.actions['merge'] = Merge()
-
-class Push(Action):
-    
-    def __init__(self):
-        Action.__init__(self, parallel=True, any_order=True)
-
-    def single_action_started(self, resource): 
-        pass
-    
-    def single_action_result_display(self, resource, result): 
-        pass
-
-    def single_action(self, r):
-        if not r.is_downloaded():
-            raise ActionException('Not downloaded %s' % r)
-
-        # TODO: add branch check
-        
-        if r.something_to_push() and r.simple_push():
-            r.push()
-
-                
-Action.actions['push'] = Push()
-            
-        
-        
-status_fields = ('present num_modified num_untracked to_push simple_push '
-                'to_merge simple_merge').split()
-StatusResult = namedtuple('StatusResult', status_fields)
-
-
-def status2string(r, res):
-    flags = [''] * 3
-    sizes = [10, 18, 18]
-    
-    if not res.present:
-        flags[0] = 'missing'
-    else:    
-        if res.num_modified or res.num_untracked:
-            fm = '%3dm' % res.num_modified if res.num_modified else "    "
-            if res.num_modified > 99:
-                fm = '>99u'
-            fu = '%3du' % res.num_untracked if res.num_untracked else "    "
-            if res.num_untracked > 99:
-                fu = '>99u'
-        
-            flags[0] = fm + ' ' + fu
-        
-        if res.to_merge:
-            flags[1] = 'merge (%d)' % res.to_merge
-            if not res.simple_merge:
-                flags[1] += ' (!)'
-            else:
-                flags[1] += '    '            
-
-        if res.to_push:
-            flags[2] = 'push (%d)' % res.to_push
-            if not res.simple_push:
-                flags[2] += ' (!)'
-            else:
-                flags[2] += '    '         
-            
-    if not all([f == '' for f in flags]):
-        status = ""
-        for i, f in enumerate(flags):
-            fm = "{0:<%d}" % sizes[i]
-            status += fm.format(f)
-        status += " {0}".format(r)
-        return status
+def write_message(stream, r, m):
+    if not m: 
+        return
+    name = '%s' % r
+    if name in m:
+        stream.write('%s\n' % m)
     else:
-        return None
-
-
-class Checkout(Action):
-    
-    def __init__(self): 
-        Action.__init__(self, parallel=False, any_order=False)
-
-    def single_action_starting(self, resource): 
-        pass
-
-    def single_action_result_display(self, resource, result): 
-        pass
-    
-    def single_action(self, r):
-        if not r.is_downloaded():
-            r.checkout()
-    
-Action.actions['checkout'] = Checkout()
-
-class Status(Action):
-    
-    def __init__(self): 
-        Action.__init__(self, parallel=True, any_order=False)
-
-    def single_action_starting(self, resource):  # @UnusedVariable
-        return None
-
-    def single_action_result_display(self, resource, result):
-        if not isinstance(result, Exception):
-            return status2string(resource, result)
-    
-    def single_action(self, r):
+        stream.write('%s: %s\n' % (name, m))
         
-        if not r.is_downloaded():
-            present = False
-            num_modified = None
-            num_untracked = None
-            to_push = None
-            to_merge = None
-            simple_merge = None
-            simple_push = None
-        else:
-            present = True
-            num_modified = r.num_modified()
-            num_untracked = r.num_untracked()
-            to_push = r.something_to_push()
-            to_merge = r.something_to_merge()
-            if to_merge: 
-                simple_merge = r.simple_merge()
-            else: 
-                simple_merge = None
-            if to_push: 
-                simple_push = r.simple_push()
-            else: 
-                simple_push = None
-
-                
-        asdict = dict([(k, locals()[k]) for k in status_fields])
-        return StatusResult(**asdict)
-
-    def summary(self, resources, results):
-        pass
-
-Action.actions['status'] = Status()
-
-
-
+def write_console_status(s):
+    s = s.ljust(100)  # TODO: add correct lengt
+    sys.stderr.write(s + '\r')
     

@@ -71,7 +71,8 @@ class Resource(object):
             self.config['install'] = 'setuptools'
 
         if not os.path.exists(self.destination):
-            print('Resource warning: %r does not exist %r' % (self.destination, self.config))
+            # print('Resource warning: %r does not exist %r' % (self.destination, self.config))
+            pass
 
     def is_downloaded(self):
         return os.path.exists(self.destination)

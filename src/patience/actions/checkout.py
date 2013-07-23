@@ -1,11 +1,9 @@
 from patience.action import Action
-from patience.structures import ActionException
+
+__all__ = ['Checkout']
 
 
-__all__ = ['Install']
-
-
-class Install(Action):
+class Checkout(Action):
     
     def __init__(self): 
         Action.__init__(self, parallel=False, any_order=False)
@@ -17,9 +15,8 @@ class Install(Action):
         pass
     
     def single_action(self, r):
-        if r.is_downloaded():
-            r.install()
-        else:
-            raise ActionException('Resource %s not ready.' % r)
+        if not r.is_downloaded():
+            r.checkout()
     
-Action.actions['install'] = Install()
+Action.actions['checkout'] = Checkout()
+

@@ -10,12 +10,45 @@ class Git(Resource):
         self.branch = config.get('branch', 'master')
         self.show_operations = False 
 
+    def current_branch(self):
+        branch = self.run('git rev-parse --abbrev-ref HEAD').strip()
+        
+        return branch + ''
+
+    def check_right_branch(self):
+        if not self.is_right_branch():
+            cur_branch = self.current_branch()
+            msg = ('Currently on branch %r rather than %r' % 
+                    (cur_branch, self.branch)) 
+            raise ActionException(msg)
+    
+    def is_right_branch(self):
+        """ raises an exception if we are not on the branche
+            declared in the configuration. """
+        cur_branch = self.current_branch()
+        return cur_branch == self.branch
+            
+    def check_branch_exists_remote(self):
+        if not self.branch_exists_remote():
+            msg = 'Remote branch %r does not exist.' % self.branch
+            raise ActionException(msg)
+            
+        
+    def branch_exists_remote(self):
+        res = self.run0('git show-ref --verify refs/remotes/origin/%s' % self.branch,
+                        raise_on_error=False)
+        exists = res.ret == 0
+        return exists
+    
     def checkout(self):
         self.run(['git', 'clone', self.url, self.destination],
                     cwd='.'  # the other was not created yet
                 )
 
     def run(self, cmd, cwd=None, errmsg=None): 
+        return self.run0(cmd, cwd, errmsg).stdout
+    
+    def run0(self, cmd, cwd=None, errmsg=None, raise_on_error=True): 
         try:
             if cwd is None: 
                 cwd = self.destination
@@ -24,12 +57,12 @@ class Git(Resource):
                 print('%-30s: %s' % (self.short_path, cmd))
                
             res = system_cmd_result(cwd, cmd,
-                                    raise_on_error=True,
+                                    raise_on_error=raise_on_error,
                                     display_stdout=self.show_operations,
                                     display_stderr=self.show_operations,
                                     display_prefix=self.short_path
                                     )
-            return res.stdout
+            return res
         except CmdException as e:
             if errmsg:
                 s = '%s\n' % errmsg
@@ -49,7 +82,6 @@ class Git(Resource):
     def runf(self, f, **args):
         ''' Formats and runs a command. '''
         return self.run(self.f(f, **args))
-    
         
     def badconf(self, e):
         raise ActionException(e)
@@ -62,6 +94,8 @@ class Git(Resource):
         self.merge()
 
     def merge(self):
+        self.check_right_branch()
+        self.check_branch_exists_remote()
         if self.something_to_merge():
             if self.simple_merge():
                 self.runf('git merge origin/{branch}')
@@ -83,6 +117,12 @@ class Git(Resource):
     def something_to_push(self):
         ''' Returns the number of commits that we can push to the remote
             branch.'''
+        self.check_right_branch()
+        if not self.branch_exists_remote():
+            # print('need to push brnach')
+            # we need to push the branch, at least
+            return 1 
+        
         command = 'git log origin/{branch}..{branch} --no-merges --pretty=oneline'
         output = self.runf(command)
         commits = linesplit(output)
@@ -90,13 +130,19 @@ class Git(Resource):
 
     def something_to_merge(self):
         ''' Returns the number of commits that we can merge from remote branch.'''
+        self.check_right_branch()
+        if not self.branch_exists_remote():
+            return 0
+        
         command = 'git log {branch}..origin/{branch} --no-merges --pretty=oneline'
         output = self.runf(command)
         commits = linesplit(output)
         return len(commits)
     
     def simple_merge(self):
-        ''' Checks that our branch can be fast forwarded. ''' 
+        ''' Checks that our branch can be fast forwarded. '''
+        self.check_right_branch() 
+        self.check_branch_exists_remote()
         rev = self.runf('git rev-parse {branch}').strip()
         base = self.runf('git merge-base {rev} origin/{branch}', rev=rev)
         if rev == base.strip():
@@ -107,6 +153,10 @@ class Git(Resource):
     def simple_push(self):
         ''' Returns true if we can do a safe push (assuming we have the last
             revision of the remote branch.) '''
+        self.check_right_branch()
+        if not self.branch_exists_remote():
+            return True
+
         stdout = self.runf('git rev-list {branch}..origin/{branch}')
         if stdout.strip():
             return False
@@ -114,6 +164,7 @@ class Git(Resource):
             return True
     
     def commit(self):
+        self.check_right_branch()
         if self.num_modified():
             n = self.num_untracked()
             if n > 0:
@@ -129,8 +180,9 @@ class Git(Resource):
                 self.run(self.destination, ['git', 'commit', '-a', '-m', msg])
     
     def push(self):
+        self.check_right_branch()
         if self.simple_push():
-            self.run('git push')
+            self.run('git push --all')
         else:
             self.badcond("Cannot push because of conflicts.")
 

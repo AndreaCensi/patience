@@ -1,6 +1,8 @@
 from patience.action import Action
 from patience.structures import ActionException
 
+__all__ = ['Develop']
+
 
 class Develop(Action):
     
