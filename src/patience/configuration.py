@@ -42,7 +42,6 @@ def instantiate(config, base_dir='.'):
             config['type'] = 'subversion'
         else:
             raise ConfigException('Could not guess type from url', config)
-        
     
     res_type = config['type']
     if res_type == 'subversion':
