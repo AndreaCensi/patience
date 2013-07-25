@@ -13,6 +13,12 @@ class Status(Action):
     def single_action_starting(self, resource):  # @UnusedVariable
         return None
 
+    def result_display_start(self):
+        return """  unknown_       __merges    
+modified  |     |    pushes     _branch status
+    |     |     |       |      |
+"""
+
     def single_action_result_display(self, resource, result):
         if not isinstance(result, Exception):
             return status2string(resource, result)
@@ -20,6 +26,7 @@ class Status(Action):
     def single_action(self, r):
         
         branch = r.branch
+        
 
         if not r.is_downloaded():
             present = False
@@ -31,9 +38,13 @@ class Status(Action):
             simple_push = None
             current_branch = None
             branch_mismatch = None
+            local_branch_exists = None
+            remote_branch_exists = None
         else:
             current_branch = r.current_branch()
             branch_mismatch = branch != current_branch
+            local_branch_exists = r.branch_exists_local()
+            remote_branch_exists = r.branch_exists_local()
             
             present = True
             num_modified = r.num_modified()

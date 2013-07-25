@@ -16,14 +16,18 @@ class Git(Resource):
         return branch + ''
 
     def check_right_branch(self):
+        """ Raise exception if we are not on the right branch. """
         if not self.is_right_branch():
             cur_branch = self.current_branch()
             msg = ('Currently on branch %r rather than %r' % 
                     (cur_branch, self.branch)) 
             raise ActionException(msg)
     
+    def checkout_right_branch(self):
+        return self.runf('git checkout {branch}') 
+    
     def is_right_branch(self):
-        """ raises an exception if we are not on the branche
+        """ return false  if we are not on the branche
             declared in the configuration. """
         cur_branch = self.current_branch()
         return cur_branch == self.branch
@@ -33,13 +37,21 @@ class Git(Resource):
             msg = 'Remote branch %r does not exist.' % self.branch
             raise ActionException(msg)
             
-        
     def branch_exists_remote(self):
         res = self.run0('git show-ref --verify refs/remotes/origin/%s' % self.branch,
                         raise_on_error=False)
         exists = res.ret == 0
         return exists
+
+    def branch_exists_local(self):
+        res = self.run0('git show-ref --quiet --verify -- refs/heads/%s' % self.branch,
+                        raise_on_error=False)
+        exists = res.ret == 0
+        return exists
     
+    def make_local_branch(self):
+        return self.runf('git branch {branch}')
+
     def checkout(self):
         self.run(['git', 'clone', self.url, self.destination],
                     cwd='.'  # the other was not created yet
@@ -181,10 +193,12 @@ class Git(Resource):
     
     def push(self):
         self.check_right_branch()
-        if self.simple_push():
-            self.run('git push --all')
-        else:
+
+        if not self.simple_push():
             self.badcond("Cannot push because of conflicts.")
+            
+        self.runf('git push origin {branch}')
+            
 
     def current_revision(self):
         out = self.run('git rev-parse HEAD')

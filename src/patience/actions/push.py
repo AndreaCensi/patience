@@ -21,10 +21,11 @@ class Push(Action):
             raise ActionException('Not downloaded %s' % r)
 
         # TODO: add branch check
-        
         if r.something_to_push() and r.simple_push():
             r.push()
 
+    def applicable(self, r):
+        return r.is_right_branch()
                 
 Action.actions['push'] = Push()
             

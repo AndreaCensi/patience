@@ -1,4 +1,5 @@
 from patience.action import Action
+from patience.structures import ActionException
 
 __all__ = ['Checkout']
 
@@ -16,7 +17,8 @@ class Checkout(Action):
     
     def single_action(self, r):
         if not r.is_downloaded():
-            r.checkout()
+            raise ActionException('Not downloaded %s' % r)
+
     
 Action.actions['checkout'] = Checkout()
 

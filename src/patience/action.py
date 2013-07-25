@@ -1,35 +1,70 @@
 from .structures import ActionException
 import sys
+from abc import ABCMeta, abstractmethod
 
 
 __all__ = ['Action']
 
+# from contracts import ContractsMeta
+
 
 class Action(object):
+    
+    __metaclass__ = ABCMeta
+
+    def single_action_started(self, resource): 
+        pass
+    
+    def result_display_start(self):
+        return None
+    
+    @abstractmethod
+    def single_action_result_display(self, resource, result): 
+        pass
+
+    @abstractmethod
+    def single_action(self, r):
+        pass
+    
+    def applicable(self, r): 
+        """ Return True if it is applicable to this resource. """
+        return True
+    
     actions = {}
     
     def __init__(self, parallel=True, any_order=False):
         self.parallel = parallel
         self.any_order = any_order
         
+    def filter_applicable(self, resources):
+        """ Returns the resoruces for which this action is applicable. """
+        return filter(self.applicable, resources)
+        
     def go(self, resources, force_sequential=False,
                  max_processes=3, stream=sys.stdout,
                  console_status=False,
                  show_operations=False):
-                 
+        
+        s = self.result_display_start()
+        if s is not None:            
+            if stream:
+                stream.write(s)
+  
+        resources = self.filter_applicable(resources)
+         
         for r in resources:
             r.show_operations = show_operations 
             
         if not self.parallel or force_sequential:
-            return self.go_sequential(resources, stream,
+            return self._go_sequential(resources, stream,
                      console_status=console_status)
         else:
-            return self.go_parallel(resources, stream,
+            return self._go_parallel(resources, stream,
                     any_order=self.any_order,
                     max_processes=max_processes,
                     console_status=console_status)
     
-    def go_sequential(self, resources, stream, console_status):
+    def _go_sequential(self, resources, stream, console_status):
         results = {}
         for i, r in enumerate(resources): 
 
@@ -55,7 +90,7 @@ class Action(object):
         return results
     
 
-    def go_parallel(self, resources, stream, any_order, max_processes,
+    def _go_parallel(self, resources, stream, any_order, max_processes,
         console_status):
 
         from multiprocessing import Pool, TimeoutError
