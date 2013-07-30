@@ -1,7 +1,4 @@
-# from . import actions  # @UnusedImport
-# from .action import Action
-# from .configuration import load_resources, find_configuration
-# 
+from .structures import UserError
 import datetime
 import platform
 import sys
@@ -21,6 +18,11 @@ def main():
     parser.add_option("-V", help="Show git operations",
                      dest='show_operations',
                     default=False, action='store_true')
+    
+    parser.add_option("-O", help="Show stdout/stderr of operations",
+                     dest='show_stdout',
+                    default=False, action='store_true')
+    
     
     parser.add_option("--yaml", help="Write YAML output", default=False,
                     action='store_true')
@@ -49,8 +51,11 @@ def main():
     for e in errors:
         print('error: %s' % e)
         
+    from .action import Action
     if len(args) == 0:
-        raise Exception('Please provide command.')
+        msg = 'Please provide command: %s' % (Action.actions.keys()) 
+        raise UserError(msg)
+    
     if len(args) > 1:
         raise Exception('Please provide only one command.')
     command = args[0]
@@ -64,8 +69,7 @@ def main():
     else:
         stream = sys.stdout
         
-    from .action import Action
-
+    
     if command in Action.actions:
         action = Action.actions[command]
         
@@ -77,7 +81,8 @@ def main():
             force_sequential=force_sequential,
             stream=stream,
             console_status=options.verbose,
-            show_operations=options.show_operations)
+            show_operations=options.show_operations,
+            show_stdout=options.show_stdout)
         
         if options.yaml:
             import yaml

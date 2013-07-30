@@ -3,7 +3,7 @@ from collections import namedtuple
         
 status_fields = ('present num_modified num_untracked to_push simple_push '
                 'to_merge simple_merge branch current_branch branch_mismatch '
-                'local_branch_exists remote_branch_exists').split()
+                'local_branch_exists remote_branch_exists url current_url').split()
 StatusResult = namedtuple('StatusResult', status_fields)
 
 __all__ = ['StatusResult', 'status_fields', 'status2string']
@@ -37,38 +37,42 @@ def status2string(r, res):
         
             flags[flag_modified] = fm + ' ' + fu
         
-        
-        if not res.local_branch_exists:
+        if  (res.current_url is not None) and (res.url != res.current_url):
+#         if(res.url != res.current_url):
+            
+            remarks.append('Wrong remote url: %s' % res.current_url)
+            
+        if  res.local_branch_exists == False:
             flags[flag_branch_local] = 'no local %s' % res.branch
             flags[flag_branch_local] = '!L'
             
             remarks.append('Local branch %r does not exist.' % res.branch)
         
-        if not res.remote_branch_exists:
+        if  res.remote_branch_exists == False:
             flags[flag_branch_remote] = 'no remote %s' % res.branch
             flags[flag_branch_remote] = '!R' 
             
             remarks.append('Remote branch %r does not exist.' % res.branch)
-             
+
         
-        if res.branch_mismatch:
+        if res.branch_mismatch == True:
             flags[flag_branch] = 'on %s instead of %s' % (res.current_branch, res.branch)
             flags[flag_branch] = '~B'
             
             remarks.append('On branch %r rather than %r.' % (res.current_branch, res.branch))
         else:                
-            if res.to_merge:
+            if res.to_merge == True:
                 flags[flag_merge] = 'M %d' % res.to_merge
-                if not res.simple_merge:
+                if res.simple_merge == False:
                     flags[flag_merge] += '!'
                     remarks.append('There might be conflicts when merging.')
                 else:
                     pass
                     # flags[flag_merge] += '    '            
     
-            if res.to_push:
+            if res.to_push == True:
                 flags[flag_push] = 'P %d' % res.to_push
-                if not res.simple_push:
+                if res.simple_push == False:
                     flags[flag_push] += '!'
                     remarks.append('There might be conflicts when pushing.')
                 else:
@@ -76,7 +80,7 @@ def status2string(r, res):
                     # flags[flag_push] += '    '
                          
             
-    if not all([f == '' for f in flags]):
+    if not all([f == '' for f in flags]) or remarks:
         status = ""
         for i, f in enumerate(flags):
             fm = "{0:<%d}" % sizes[i]

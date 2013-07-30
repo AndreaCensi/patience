@@ -22,9 +22,10 @@ class Fetch(Action):
         if not r.is_downloaded():
             raise ActionException('Not downloaded %s' % r)
 
-        if r.config['type'] == 'git':
-            return r.fetch()
-        raise ActionException("Not implemented for %r" % r.config['type'])
+#         if isinstance(r, Git):
+        return r.fetch()
+        
+#         raise ActionException("Not implemented for %r" % r.config['type'])
 
 Action.actions['fetch'] = Fetch()
 

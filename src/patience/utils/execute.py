@@ -34,6 +34,7 @@ def system_cmd_result(
     display_stderr=False,
     raise_on_error=False,
     display_prefix=None):
+    
     ''' Returns a tuple CmdResult; raises CmdException. '''
     if display_prefix is None:
         display_prefix = '%s %s' % (cwd, cmd)
@@ -43,8 +44,21 @@ def system_cmd_result(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=cwd)
-    if 1:
+    
+    if 1:  # XXX?
         stdout, stderr = p.communicate()
+        
+        stdout = stdout.strip()
+        stderr = stderr.strip()
+        
+        prefix = display_prefix + 'err> '
+        if display_stderr and stderr:
+            print(indent(stderr, prefix))
+            
+        prefix = display_prefix + 'out> '
+        if display_stdout and stdout:
+            print(indent(stdout, prefix))
+    
         p.wait()
     else:
         # p.stdin.close()
@@ -61,7 +75,7 @@ def system_cmd_result(
                 if not nexti:
                     stream.close()
                     return False
-                lines.append(next)
+                lines.append(nexti)
                 return True
             else:
                 stream.close()
@@ -69,15 +83,20 @@ def system_cmd_result(
                 
         # XXX: read all the lines
         while stderr_to_read or stdout_to_read:
-            stderr_to_read = read_stream(p.stderr, stderr_lines)
-            stdout_to_read = False 
-            # stdout_to_read = read_stream(p.stdout, stdout_lines)
+            
+            if stderr_to_read:
+                stderr_to_read = read_stream(p.stderr, stderr_lines)
+#             stdout_to_read = False
+        
+            if stdout_to_read:
+                stdout_to_read = read_stream(p.stdout, stdout_lines)
             
             while stderr_lines:
                 l = stderr_lines.pop(0)
                 stderr += l
                 if display_stderr:
                     sys.stderr.write('%s ! %s' % (display_prefix, l))
+                    
             while stdout_lines:
                 l = stdout_lines.pop(0)
                 stdout += l
@@ -86,7 +105,6 @@ def system_cmd_result(
                 
         stdout = p.stdout.read()
         p.wait()
-            
             
     ret = p.returncode 
     
@@ -146,3 +164,8 @@ def result_format(cwd, cmd, ret, stdout=None, stderr=None):
         msg += '\n' + wrap('stderr', stderr)
     return msg
     
+
+def indent(s, prefix):
+    lines = s.split('\n')
+    lines = ['%s%s' % (prefix, line.rstrip()) for line in lines]
+    return '\n'.join(lines)

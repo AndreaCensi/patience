@@ -15,10 +15,14 @@ class Checkout(Action):
     def single_action_result_display(self, resource, result): 
         pass
     
+    def applicable(self, r):
+        return not r.is_downloaded()
+    
     def single_action(self, r):
-        if not r.is_downloaded():
-            raise ActionException('Not downloaded %s' % r)
+        if r.is_downloaded():
+            raise ActionException('Already downloaded %s' % r)
 
+        r.checkout()
     
 Action.actions['checkout'] = Checkout()
 

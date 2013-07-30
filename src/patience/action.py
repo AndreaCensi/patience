@@ -26,7 +26,7 @@ class Action(object):
     def single_action(self, r):
         pass
     
-    def applicable(self, r): 
+    def applicable(self, r):  # @UnusedVariable
         """ Return True if it is applicable to this resource. """
         return True
     
@@ -43,7 +43,8 @@ class Action(object):
     def go(self, resources, force_sequential=False,
                  max_processes=3, stream=sys.stdout,
                  console_status=False,
-                 show_operations=False):
+                 show_operations=False,
+                 show_stdout=False):
         
         s = self.result_display_start()
         if s is not None:            
@@ -53,7 +54,8 @@ class Action(object):
         resources = self.filter_applicable(resources)
          
         for r in resources:
-            r.show_operations = show_operations 
+            r.show_operations = show_operations
+            r.show_stdout = show_stdout 
             
         if not self.parallel or force_sequential:
             return self._go_sequential(resources, stream,

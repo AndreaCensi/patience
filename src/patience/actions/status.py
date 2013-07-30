@@ -26,49 +26,56 @@ modified  |     |    pushes     _branch status
     def single_action(self, r):
         
         branch = r.branch
-        
+        url = r.url
+
+        current_url = None
+        num_modified = None
+        num_untracked = None
+        to_push = None
+        to_merge = None
+        simple_merge = None
+        simple_push = None
+        current_branch = None
+        branch_mismatch = None
+        local_branch_exists = None
+        remote_branch_exists = None
 
         if not r.is_downloaded():
             present = False
-            num_modified = None
-            num_untracked = None
-            to_push = None
-            to_merge = None
-            simple_merge = None
-            simple_push = None
-            current_branch = None
-            branch_mismatch = None
-            local_branch_exists = None
-            remote_branch_exists = None
         else:
-            current_branch = r.current_branch()
-            branch_mismatch = branch != current_branch
-            local_branch_exists = r.branch_exists_local()
-            remote_branch_exists = r.branch_exists_local()
-            
             present = True
+            current_url = r.get_remote_url()
+            
+            if current_url != url:
+                pass
+            else:
+                remote_branch_exists = r.branch_exists_remote()
+               
+                current_branch = r.current_branch()
+                branch_mismatch = branch != current_branch
+                local_branch_exists = r.branch_exists_local()
+                
+                if branch == current_branch:
+                    to_push = r.something_to_push()
+                    to_merge = r.something_to_merge()
+                    if to_merge: 
+                        simple_merge = r.simple_merge()
+                    else: 
+                        simple_merge = None
+                    if to_push: 
+                        simple_push = r.simple_push()
+                    else: 
+                        simple_push = None
+                else:
+                    to_push = None
+                    to_merge = None
+                    simple_merge = None
+                    simple_push = None
+                
+
             num_modified = r.num_modified()
             num_untracked = r.num_untracked()
             
-            if branch == current_branch:
-                
-                to_push = r.something_to_push()
-                to_merge = r.something_to_merge()
-                if to_merge: 
-                    simple_merge = r.simple_merge()
-                else: 
-                    simple_merge = None
-                if to_push: 
-                    simple_push = r.simple_push()
-                else: 
-                    simple_push = None
-            else:
-                to_push = None
-                to_merge = None
-                simple_merge = None
-                simple_push = None
-                
-                
         asdict = dict([(k, locals()[k]) for k in status_fields])
         return StatusResult(**asdict)
 

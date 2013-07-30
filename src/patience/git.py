@@ -8,8 +8,10 @@ class Git(Resource):
         Resource.__init__(self, config)
         self.url = config['url']
         self.branch = config.get('branch', 'master')
+        
         self.show_operations = False 
-
+        self.show_stdout = False
+        
     def current_branch(self):
         branch = self.run('git rev-parse --abbrev-ref HEAD').strip()
         
@@ -32,7 +34,20 @@ class Git(Resource):
         cur_branch = self.current_branch()
         return cur_branch == self.branch
             
+    def check_remote_correct(self):
+        if not self.is_remote_correct():
+            msg = 'The remote is not correct: %s' % self.get_remote_url()
+            raise ActionException(msg)
+                
+    def is_remote_correct(self):
+        return self.get_remote_url() == self.url
+    
+    def get_remote_url(self):
+        url = self.run('git config --get remote.origin.url')
+        return url
+        
     def check_branch_exists_remote(self):
+        self.check_remote_correct()
         if not self.branch_exists_remote():
             msg = 'Remote branch %r does not exist.' % self.branch
             raise ActionException(msg)
@@ -65,14 +80,17 @@ class Git(Resource):
             if cwd is None: 
                 cwd = self.destination
                 
+            display_prefix = '%-30s: ' % self.short_path
+            
             if self.show_operations:
-                print('%-30s: %s' % (self.short_path, cmd))
+                print(display_prefix + ' %s ' % cmd)
                
+            display_prefix = '%-30s  ' % ''
             res = system_cmd_result(cwd, cmd,
                                     raise_on_error=raise_on_error,
                                     display_stdout=self.show_operations,
                                     display_stderr=self.show_operations,
-                                    display_prefix=self.short_path
+                                    display_prefix=display_prefix
                                     )
             return res
         except CmdException as e:
@@ -99,6 +117,7 @@ class Git(Resource):
         raise ActionException(e)
 
     def fetch(self):
+        self.check_remote_correct()
         self.run('git fetch')
             
     def update(self):
@@ -106,6 +125,7 @@ class Git(Resource):
         self.merge()
 
     def merge(self):
+        self.check_remote_correct()
         self.check_right_branch()
         self.check_branch_exists_remote()
         if self.something_to_merge():
@@ -130,6 +150,7 @@ class Git(Resource):
         ''' Returns the number of commits that we can push to the remote
             branch.'''
         self.check_right_branch()
+        self.check_remote_correct()
         if not self.branch_exists_remote():
             # print('need to push brnach')
             # we need to push the branch, at least
@@ -143,6 +164,7 @@ class Git(Resource):
     def something_to_merge(self):
         ''' Returns the number of commits that we can merge from remote branch.'''
         self.check_right_branch()
+        self.check_remote_correct()
         if not self.branch_exists_remote():
             return 0
         
@@ -154,6 +176,7 @@ class Git(Resource):
     def simple_merge(self):
         ''' Checks that our branch can be fast forwarded. '''
         self.check_right_branch() 
+        self.check_remote_correct()
         self.check_branch_exists_remote()
         rev = self.runf('git rev-parse {branch}').strip()
         base = self.runf('git merge-base {rev} origin/{branch}', rev=rev)
@@ -166,6 +189,7 @@ class Git(Resource):
         ''' Returns true if we can do a safe push (assuming we have the last
             revision of the remote branch.) '''
         self.check_right_branch()
+        self.check_remote_correct()
         if not self.branch_exists_remote():
             return True
 
@@ -193,6 +217,7 @@ class Git(Resource):
     
     def push(self):
         self.check_right_branch()
+        self.check_remote_correct()
 
         if not self.simple_push():
             self.badcond("Cannot push because of conflicts.")
