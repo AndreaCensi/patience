@@ -1,6 +1,6 @@
+from system_cmd import system_run
+from .structures import ActionException
 import os
-from .utils import system_cmd_fail
-from patience.structures import ActionException
 
 def replace_variables(path, rules):
     for k, v in rules:
@@ -115,11 +115,11 @@ class Resource(object):
             self.run('python setup.py develop')
         elif install_type == 'cmake':
             # XXX: qui come va?
-            system_cmd_fail(self.destination, 'cmake -DCMAKE_INSTALL_PREFIX=${BVENV_PREFIX} .')
+            system_run(self.destination, 'cmake -DCMAKE_INSTALL_PREFIX=${BVENV_PREFIX} .')
         elif install_type == 'make':
             self.run('make')
             # XXX:
-            system_cmd_fail(self.destination, 'make install')
+            system_run(self.destination, 'make install')
         
         else:
             raise ActionException('Unknown install type %r.' % install_type)

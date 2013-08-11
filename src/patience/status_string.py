@@ -38,9 +38,8 @@ def status2string(r, res):
             flags[flag_modified] = fm + ' ' + fu
         
         if  (res.current_url is not None) and (res.url != res.current_url):
-#         if(res.url != res.current_url):
-            
             remarks.append('Wrong remote url: %s' % res.current_url)
+            remarks.append('(expected %s)' % res.url)
             
         if  res.local_branch_exists == False:
             flags[flag_branch_local] = 'no local %s' % res.branch

@@ -1,5 +1,6 @@
 from .resources import Resource
-from .utils import system_output, system_cmd_fail
+
+__all__ = ['Subversion']
 
 class Subversion(Resource):
     def __init__(self, config):

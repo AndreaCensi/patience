@@ -85,7 +85,6 @@ modified  |     |    pushes     _branch status
 Action.actions['status'] = Status()
 
 
-
 class StatusFull(Status):
     
 

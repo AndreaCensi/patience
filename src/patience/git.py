@@ -1,7 +1,10 @@
 from .resources import Resource
-from .utils import  system_cmd_result, system_cmd_show, CmdException
-
+from system_cmd import  system_cmd_result, system_cmd_show, CmdException
+from contracts import contract
 from .structures import ActionException
+
+__all__ = ['Git']
+
 
 class Git(Resource):
     def __init__(self, config):
@@ -52,8 +55,10 @@ class Git(Resource):
             msg = 'Remote branch %r does not exist.' % self.branch
             raise ActionException(msg)
             
-    def branch_exists_remote(self):
-        res = self.run0('git show-ref --verify refs/remotes/origin/%s' % self.branch,
+    def branch_exists_remote(self, branch=None):
+        if branch is None:
+            branch = self.branch
+        res = self.run0('git show-ref --verify refs/remotes/origin/%s' % branch,
                         raise_on_error=False)
         exists = res.ret == 0
         return exists
@@ -145,7 +150,104 @@ class Git(Resource):
         output = self.run(command)
         files = linesplit(output)
         return len(files)
+
+    @contract(returns='dict(str:str)')
+    def list_remote_branches(self, ignore=['gh-pages']):
+        """ REturns dictionary branch -> sha """
+        out = self.run('git ls-remote --heads origin')
+        # f93ffca589ad79a3ad2aad32019bf608d43b0956    refs/heads/env_dvsd
+        # b4e8e4a0ec8432de4b6c1c61280199f0f3a270bf    refs/heads/env_fault
+        # b4e8e4a0ec8432de4b6c1c61280199f0f3a270bf    refs/heads/master
+        branches = {}
+        for line in linesplit(out):
+            tokens = line.split('\t')
+            assert len(tokens) == 2, tokens
+            sha = tokens[0]
+            ref = tokens[1]
+            assert 'refs/heads/' in ref
+            branch = ref.replace('refs/heads/', '')
+            assert branch
+            if branch in ignore:
+                continue
+            branches[branch] = sha
+        
+        return branches
     
+    @contract(returns='dict(str:tuple(int, bool, int, bool))')
+    def list_differences_with_remote_branches(self):
+        """
+            Compares the current branch to the others in the remote.
+            Returns dict rbranch -> npush, simple, nmerge, simple_merge.
+        """
+        res = {}
+        for rbranch in self.list_remote_branches():
+            lbranch = self.branch
+            if lbranch == rbranch:
+                continue
+            npush = self.something_to_push_to(lbranch=lbranch, rbranch=rbranch)
+            if npush > 0:
+                simple_push = self.simple_push_generic(lbranch=lbranch, rbranch=rbranch)
+            else:
+                simple_push = True
+            nmerge = self.something_to_merge_from(lbranch=lbranch, rbranch=rbranch)
+            if nmerge > 0:
+                simple_merge = self.simple_merge_generic(lbranch=lbranch, rbranch=rbranch)
+            else:
+                simple_merge = True
+            res[rbranch] = (npush, simple_push, nmerge, simple_merge) 
+        return res
+     
+    def something_to_push_to(self, lbranch, rbranch):
+        ''' Returns the number of commits that we can push to a remote
+            branch.'''
+        self.check_right_branch()
+        self.check_remote_correct()
+        if not self.branch_exists_remote(rbranch):
+            raise ValueError(rbranch)
+        
+        output = self.runf('git log origin/{rbranch}..{lbranch} --no-merges --pretty=oneline',
+                           rbranch=rbranch, lbranch=lbranch)
+        commits = linesplit(output)
+        return len(commits)
+    
+    def something_to_merge_from(self, lbranch, rbranch):
+        ''' Returns the number of commits that we can merge from a remote branch.'''
+        self.check_right_branch()
+        self.check_remote_correct()
+        # if not self.branch_exists_remote():
+        #    return 0
+        if not self.branch_exists_remote(rbranch):
+            raise ValueError(rbranch)
+        output = self.runf('git log  {lbranch}..origin/{rbranch} --no-merges --pretty=oneline',
+                           rbranch=rbranch, lbranch=lbranch)
+        commits = linesplit(output)
+        return len(commits)
+    
+    def simple_merge_generic(self, lbranch, rbranch):
+        ''' Checks that the local lbranch can be fast forwarded to rbranch. '''
+        self.check_remote_correct()
+#         self.check_branch_exists_remote(rbranch)
+        rev = self.runf('git rev-parse {lbranch}', lbranch=lbranch).strip()
+        base = self.runf('git merge-base {rev} origin/{rbranch}', rev=rev, rbranch=rbranch)
+        if rev == base.strip():
+            return True
+        else:
+            return False
+    
+    def simple_push_generic(self, lbranch, rbranch):
+        ''' Returns true if we can do a safe push (assuming we have the last
+            revision of the remote branch.) '''
+        self.check_remote_correct()
+#         if not self.branch_exists_remote():
+#             return True
+
+        stdout = self.runf('git rev-list {lbranch}..origin/{rbranch}',
+                           lbranch=lbranch, rbranch=rbranch)
+        if stdout.strip():
+            return False
+        else:
+            return True
+        
     def something_to_push(self):
         ''' Returns the number of commits that we can push to the remote
             branch.'''
@@ -160,7 +262,7 @@ class Git(Resource):
         output = self.runf(command)
         commits = linesplit(output)
         return len(commits)
-
+    
     def something_to_merge(self):
         ''' Returns the number of commits that we can merge from remote branch.'''
         self.check_right_branch()
