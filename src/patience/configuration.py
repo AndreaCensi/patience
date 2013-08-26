@@ -125,6 +125,9 @@ def load_resources_patience(filename, errors=[]):
     curdir = os.path.dirname(filename)
     
     contents = list(yaml.load_all(open(filename)))
+    if not contents:
+        print('warning: empty file %s' % filename)
+        return
     if isinstance(contents[0], list):
         contents = contents[0]
         

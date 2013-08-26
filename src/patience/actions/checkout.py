@@ -1,6 +1,7 @@
 from patience.action import Action
 from patience.structures import ActionException
 
+
 __all__ = ['Checkout']
 
 

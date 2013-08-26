@@ -49,13 +49,17 @@ class Git(Resource):
         url = self.run('git config --get remote.origin.url')
         return url
         
-    def check_branch_exists_remote(self):
+    def check_branch_exists_remote(self, branch=None):
+        """ branch = None => self.branch """
+        if branch is None:
+            branch = self.branch
         self.check_remote_correct()
-        if not self.branch_exists_remote():
-            msg = 'Remote branch %r does not exist.' % self.branch
+        if not self.branch_exists_remote(branch):
+            msg = 'Remote branch %r does not exist.' % branch
             raise ActionException(msg)
             
     def branch_exists_remote(self, branch=None):
+        """ branch = None => self.branch """
         if branch is None:
             branch = self.branch
         res = self.run0('git show-ref --verify refs/remotes/origin/%s' % branch,
@@ -202,8 +206,10 @@ class Git(Resource):
             branch.'''
         self.check_right_branch()
         self.check_remote_correct()
+        self.check_branch_exists_remote(rbranch)
+
         if not self.branch_exists_remote(rbranch):
-            raise ValueError(rbranch)
+            raise ValueError('%s: The remote branch %r does not exist.' % (self, rbranch))
         
         output = self.runf('git log origin/{rbranch}..{lbranch} --no-merges --pretty=oneline',
                            rbranch=rbranch, lbranch=lbranch)
@@ -226,7 +232,7 @@ class Git(Resource):
     def simple_merge_generic(self, lbranch, rbranch):
         ''' Checks that the local lbranch can be fast forwarded to rbranch. '''
         self.check_remote_correct()
-#         self.check_branch_exists_remote(rbranch)
+        self.check_branch_exists_remote(rbranch)
         rev = self.runf('git rev-parse {lbranch}', lbranch=lbranch).strip()
         base = self.runf('git merge-base {rev} origin/{rbranch}', rev=rev, rbranch=rbranch)
         if rev == base.strip():

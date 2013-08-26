@@ -1,5 +1,4 @@
 from patience.action import Action
-from patience.status_string import status2string, StatusResult, status_fields
 
 
 __all__ = ['StatusBranches']
@@ -16,22 +15,14 @@ class StatusBranches(Action):
 
     def result_display_start(self):
         return ""
-#         """  unknown_       __merges    
-# modified  |     |    pushes     _branch status
-#     |     |     |       |      |
-# """
 
-    def single_action_result_display(self, resource, result):
+    def single_action_result_display(self, resource, result):  # @UnusedVariable
         return None
-        # return str(result)
-#         if not isinstance(result, Exception):
-#             return status2string(resource, result)
-    
+
     def single_action(self, r):
         return r.list_differences_with_remote_branches()
         
-
-    def summary(self, resources, results):
+    def summary(self, resources, results):  # @UnusedVariable
         s = ""
         from collections import defaultdict
         counter = defaultdict(lambda: 0)
@@ -92,7 +83,6 @@ def format_table(T, between='  '):
         s += '\n'
     
     return s
-
 
 
 Action.actions['status-branches'] = StatusBranches()
