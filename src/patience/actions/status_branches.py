@@ -85,5 +85,5 @@ def format_table(T, between='  '):
     return s
 
 
-Action.actions['status-branches'] = StatusBranches()
+Action.actions['branches'] = StatusBranches()
 
