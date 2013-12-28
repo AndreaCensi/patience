@@ -16,6 +16,7 @@ class Git(Resource):
         self.show_stdout = False
         
     def current_branch(self):
+        # Note: this fails if it is the initial commit
         branch = self.run('git rev-parse --abbrev-ref HEAD').strip()
         
         return branch + ''
@@ -111,7 +112,8 @@ class Git(Resource):
                     s += ' stdout: %r ' % e.res.stdout
                 if e.res.stderr:
                     s += ' stderr: %r ' % e.res.stderr          
-                
+                 
+            s = 'On resource:\n\t%s\n' % self +s
             raise ActionException(s)
             
     def f(self, f, **args):
