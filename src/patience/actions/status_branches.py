@@ -28,6 +28,10 @@ class StatusBranches(Action):
         counter = defaultdict(lambda: 0)
         counter2 = defaultdict(lambda: 0)
         for r, v in results.items():
+            if isinstance(v, Exception):
+                # XXX: maybe something else
+                continue
+            
             for b in v.keys():
                 counter[b] += 1
                 counter2[r] += 1

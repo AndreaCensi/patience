@@ -3,9 +3,9 @@ from setuptools import setup, find_packages
 
 setup(name='patience',
       author="Andrea Censi",
-      author_email="andrea@cds.caltech.edu",
+      author_email="censi@mit.edu",
       url='http://github.com/AndreaCensi/patience',
-    	version="1.2.1",
+    	version="1.3.1",
       description="A command line tool for managing multiple git repositories.",
       package_dir={'':'src'},
       packages=find_packages('src'),

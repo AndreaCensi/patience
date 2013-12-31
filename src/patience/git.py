@@ -81,6 +81,7 @@ class Git(Resource):
         self.run(['git', 'clone', self.url, self.destination],
                     cwd='.'  # the other was not created yet
                 )
+        self.checkout_right_branch()
 
     def run(self, cmd, cwd=None, errmsg=None): 
         return self.run0(cmd, cwd, errmsg).stdout
