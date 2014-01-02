@@ -2,7 +2,7 @@ from patience.action import Action
 from patience.structures import ActionException
 
 
-__all__ = ['Install']
+__all__ = ['Push']
 
 
 class Push(Action):

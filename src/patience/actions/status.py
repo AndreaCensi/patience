@@ -24,7 +24,7 @@ modified  |     |    pushes     _branch status
             return status2string(resource, result)
     
     def single_action(self, r):
-        
+#         print(r)
         branch = r.branch
         url = r.url
 
@@ -41,11 +41,16 @@ modified  |     |    pushes     _branch status
         remote_branch_exists = None
 
         if not r.is_downloaded():
+#             print('not download')
             present = False
         else:
+#             print('present')
             present = True
             current_url = r.get_remote_url()
             
+            track = r.get_what_tracks(branch)  # XXX
+#             print('%s: %s' % (r, track))
+                
             if current_url != url:
                 pass
             else:
@@ -56,8 +61,10 @@ modified  |     |    pushes     _branch status
                 local_branch_exists = r.branch_exists_local()
                 
                 if branch == current_branch:
+                    track = r.get_what_tracks(branch)
                     to_push = r.something_to_push()
                     to_merge = r.something_to_merge()
+
                     if to_merge: 
                         simple_merge = r.simple_merge()
                     else: 
@@ -71,7 +78,7 @@ modified  |     |    pushes     _branch status
                     to_merge = None
                     simple_merge = None
                     simple_push = None
-                
+                    track = r.get_what_tracks(branch)  # XXX
 
             num_modified = r.num_modified()
             num_untracked = r.num_untracked()

@@ -3,18 +3,19 @@ from collections import namedtuple
         
 status_fields = ('present num_modified num_untracked to_push simple_push '
                 'to_merge simple_merge branch current_branch branch_mismatch '
-                'local_branch_exists remote_branch_exists url current_url').split()
+                'local_branch_exists remote_branch_exists url current_url track').split()
 StatusResult = namedtuple('StatusResult', status_fields)
 
 __all__ = ['StatusResult', 'status_fields', 'status2string']
 
-sizes = [2, 14, 8, 8, 4, 4, 4]
+sizes = [2, 14, 8, 8, 4, 4, 4, 4]
 flag_modified = 1
 flag_merge = 2
 flag_push = 3
 flag_branch = 4
 flag_branch_remote = 5
 flag_branch_local = 6
+flag_track = 7
 
 
 def status2string(r, res):
@@ -37,30 +38,38 @@ def status2string(r, res):
         
             flags[flag_modified] = fm + ' ' + fu
         
-        if  (res.current_url is not None) and (res.url != res.current_url):
+        if (res.current_url is not None) and (res.url != res.current_url):
             remarks.append('Wrong remote url: %s' % res.current_url)
             remarks.append('(expected %s)' % res.url)
-            
+
+        # print('%s < %s' % (res.branch, res.track))
+        if res.track == None:
+            remarks.append('No upstream configured.')
+            flags[flag_branch_remote] = '!R'
+
         if  res.local_branch_exists == False:
             flags[flag_branch_local] = 'no local %s' % res.branch
             flags[flag_branch_local] = '!L'
             
-            remarks.append('Local branch %r does not exist.' % res.branch)
+            remarks.append('Local branch %r does not exist.' % res.branch +
+                           ' (Should be fixable by "make-branch".)')
         
         if  res.remote_branch_exists == False:
             flags[flag_branch_remote] = 'no remote %s' % res.branch
             flags[flag_branch_remote] = '!R' 
             
-            remarks.append('Remote branch %r does not exist.' % res.branch)
+            remarks.append('Remote branch %r does not exist.' % res.branch +
+                           ' (Should be fixable by "push".)')
 
         
         if res.branch_mismatch == True:
-            flags[flag_branch] = 'on %s instead of %s' % (res.current_branch, res.branch)
+            # flags[flag_branch] = 'on %s instead of %s' % (res.current_branch, res.branch)
             flags[flag_branch] = '~B'
             
-            remarks.append('On branch %r rather than %r.' % (res.current_branch, res.branch))
+            remarks.append('On branch %r rather than %r.' % (res.current_branch, res.branch)
+                           + ' (Correct using "git checkout %s".)' % res.branch)
         else:                
-            if res.to_merge == True:
+            if res.to_merge > 0:
                 flags[flag_merge] = 'M %d' % res.to_merge
                 if res.simple_merge == False:
                     flags[flag_merge] += '!'
@@ -69,7 +78,7 @@ def status2string(r, res):
                     pass
                     # flags[flag_merge] += '    '            
     
-            if res.to_push == True:
+            if res.to_push > 0:
                 flags[flag_push] = 'P %d' % res.to_push
                 if res.simple_push == False:
                     flags[flag_push] += '!'

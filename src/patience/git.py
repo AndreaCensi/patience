@@ -56,9 +56,27 @@ class Git(Resource):
             branch = self.branch
         self.check_remote_correct()
         if not self.branch_exists_remote(branch):
-            msg = 'Remote branch %r does not exist.' % branch
+            msg = 'Remote branch %r does not exist. (Should be fixable by "push".)' % branch
             raise ActionException(msg)
-            
+
+    def check_local_tracks_remote(self, branch, remote):
+        res = self.get_what_tracks(branch)
+        if res != remote:
+            msg = 'Local branch %s tracks %s, not %s.' % (branch, res, remote)
+            raise ActionException(msg)
+        
+    def get_what_tracks(self, branch):
+        # could be none
+        cmd = 'git rev-parse --symbolic-full-name --abbrev-ref %s@{u}' % branch
+        res = self.run0(cmd, raise_on_error=False)
+        if 'fatal' in res.stderr:
+            if 'fatal: No upstream configured' in res.stderr:
+                return None
+            # FIXME
+        what = res.stdout
+        # print('track %s -> %s' % (branch, what))
+        return what
+
     def branch_exists_remote(self, branch=None):
         """ branch = None => self.branch """
         if branch is None:
@@ -68,8 +86,10 @@ class Git(Resource):
         exists = res.ret == 0
         return exists
 
-    def branch_exists_local(self):
-        res = self.run0('git show-ref --quiet --verify -- refs/heads/%s' % self.branch,
+    def branch_exists_local(self, branch=None):
+        if branch is None:
+            branch = self.branch
+        res = self.run0('git show-ref --quiet --verify -- refs/heads/%s' % branch,
                         raise_on_error=False)
         exists = res.ret == 0
         return exists
@@ -83,8 +103,8 @@ class Git(Resource):
                 )
         self.checkout_right_branch()
 
-    def run(self, cmd, cwd=None, errmsg=None): 
-        return self.run0(cmd, cwd, errmsg).stdout
+    def run(self, cmd, cwd=None, errmsg=None, raise_on_error=True):
+        return self.run0(cmd, cwd, errmsg, raise_on_error=raise_on_error).stdout
     
     def run0(self, cmd, cwd=None, errmsg=None, raise_on_error=True): 
         try:
@@ -160,6 +180,7 @@ class Git(Resource):
 
     @contract(returns='dict(str:str)')
     def list_remote_branches(self, ignore=['gh-pages']):
+        # XXX This uses the network
         """ REturns dictionary branch -> sha """
         out = self.run('git ls-remote --heads origin')
         # f93ffca589ad79a3ad2aad32019bf608d43b0956    refs/heads/env_dvsd
@@ -203,7 +224,7 @@ class Git(Resource):
                 simple_merge = True
             res[rbranch] = (npush, simple_push, nmerge, simple_merge) 
         return res
-     
+
     def something_to_push_to(self, lbranch, rbranch):
         ''' Returns the number of commits that we can push to a remote
             branch.'''
@@ -262,6 +283,10 @@ class Git(Resource):
             branch.'''
         self.check_right_branch()
         self.check_remote_correct()
+
+        # XXX: need to make general
+#         self.check_local_tracks_remote(self.branch, 'origin/%s' % self.branch)
+
         if not self.branch_exists_remote():
             # print('need to push brnach')
             # we need to push the branch, at least
@@ -270,6 +295,7 @@ class Git(Resource):
         command = 'git log origin/{branch}..{branch} --no-merges --pretty=oneline'
         output = self.runf(command)
         commits = linesplit(output)
+#         print('%s -> %s' % (command, commits))
         return len(commits)
     
     def something_to_merge(self):
@@ -340,6 +366,11 @@ class Git(Resource):
         out = self.run('git rev-parse HEAD')
         out = out.split()[0]
         return out
+
+    def set_upstream(self, branch, upstream):
+        cmd = 'git branch --set-upstream %s %s' % (branch, upstream)
+        self.run(cmd)
+
 
 def linesplit(s):
     ''' Splits a string in lines; removes empty. '''
