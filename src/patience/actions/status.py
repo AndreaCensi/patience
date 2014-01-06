@@ -1,5 +1,6 @@
 from patience.action import Action
 from patience.status_string import status2string, StatusResult, status_fields
+from patience.structures import ActionException
 
 
 __all__ = ['Status', 'StatusFull']
@@ -24,7 +25,6 @@ modified  |     |    pushes     _branch status
             return status2string(resource, result)
     
     def single_action(self, r):
-#         print(r)
         branch = r.branch
         url = r.url
 
@@ -39,17 +39,26 @@ modified  |     |    pushes     _branch status
         branch_mismatch = None
         local_branch_exists = None
         remote_branch_exists = None
+        is_git_repo = None
+        track = None
+        has_remote = None
 
         if not r.is_downloaded():
-#             print('not download')
             present = False
-        else:
-#             print('present')
+        elif not r.is_git_repo():
             present = True
-            current_url = r.get_remote_url()
+            is_git_repo = False
+        else:
+            is_git_repo = True
+            present = True
             
+            if not r.has_remote():
+                has_remote = False
+            else:
+                has_remote = True
+                current_url = r.get_remote_url()
+
             track = r.get_what_tracks(branch)  # XXX
-#             print('%s: %s' % (r, track))
                 
             if current_url != url:
                 pass
@@ -85,9 +94,12 @@ modified  |     |    pushes     _branch status
             
         asdict = dict([(k, locals()[k]) for k in status_fields])
         return StatusResult(**asdict)
+#
+#     def summary(self, resources, results):
+#         for resource, result in zip(resources, results):
+#             if isinstance(result, ActionException):
+#                 print(result)
 
-    def summary(self, resources, results):
-        pass
 
 Action.actions['status'] = Status()
 
@@ -99,7 +111,8 @@ class StatusFull(Status):
         if not isinstance(result, Exception):
             return status2string(resource, result)
         else:
-            return str(result)  # XXX
+
+            return 'Error: ' + str(result)  # XXX
 
 
 Action.actions['status-full'] = StatusFull()

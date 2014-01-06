@@ -1,7 +1,11 @@
-from .resources import Resource
-from system_cmd import  system_cmd_result, system_cmd_show, CmdException
+import os
+
 from contracts import contract
+from system_cmd import system_cmd_result, system_cmd_show, CmdException
+
+from .resources import Resource
 from .structures import ActionException
+
 
 __all__ = ['Git']
 
@@ -15,6 +19,10 @@ class Git(Resource):
         self.show_operations = False 
         self.show_stdout = False
         
+    def is_git_repo(self):
+        git = os.path.join(self.destination, '.git')
+        return os.path.exists(git)
+
     def current_branch(self):
         # Note: this fails if it is the initial commit
         branch = self.run('git rev-parse --abbrev-ref HEAD').strip()
@@ -37,8 +45,17 @@ class Git(Resource):
             declared in the configuration. """
         cur_branch = self.current_branch()
         return cur_branch == self.branch
-            
+
+    def has_remote(self):
+        return 'origin' in self.runf('git remote')
+
+    def check_has_remote(self):
+        if not self.has_remote():
+            msg = 'Remote not configured.'
+            raise ActionException(msg)
+
     def check_remote_correct(self):
+        self.check_has_remote()
         if not self.is_remote_correct():
             msg = 'The remote is not correct: %s' % self.get_remote_url()
             raise ActionException(msg)
@@ -47,6 +64,7 @@ class Git(Resource):
         return self.get_remote_url() == self.url
     
     def get_remote_url(self):
+        self.check_has_remote()
         url = self.run('git config --get remote.origin.url')
         return url
         
@@ -134,7 +152,7 @@ class Git(Resource):
                 if e.res.stderr:
                     s += ' stderr: %r ' % e.res.stderr          
                  
-            s = 'On resource:\n\t%s\n' % self +s
+#             s = 'On resource:\n\t%s\n' % self +s
             raise ActionException(s)
             
     def f(self, f, **args):

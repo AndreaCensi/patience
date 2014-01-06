@@ -1,6 +1,7 @@
 from .structures import ActionException
 import sys
 from abc import ABCMeta, abstractmethod
+from contracts.utils import indent
 
 
 __all__ = ['Action']
@@ -76,7 +77,10 @@ class Action(object):
             try:
                 result = self.single_action(r)
             except ActionException as e:
-                result = e
+                result = 'exception: %s' % e
+            except:
+                print('other exception')
+                raise
 
             if stream:
                 m2 = self.single_action_result_display(r, result)
@@ -145,8 +149,8 @@ class Action(object):
         s = ''
         for path, res in results.items():
             if isinstance(res, Exception):
-                e = str(res).split('\n')[0]
-                s += '{0:<30}: {1}\n'.format(path, e)
+#                 e = str(res).split('\n')[0]
+                s += '{0:<30}:\n{1}\n'.format(path, indent(str(res), '|'))
         return s
         
 # Load actions 

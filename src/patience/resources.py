@@ -76,7 +76,7 @@ class Resource(object):
 
     def is_downloaded(self):
         return os.path.exists(self.destination)
-    
+
     def __str__(self):
         return self.short_path
     
