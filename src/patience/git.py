@@ -152,7 +152,7 @@ class Git(Resource):
                 if e.res.stderr:
                     s += ' stderr: %r ' % e.res.stderr          
                  
-#             s = 'On resource:\n\t%s\n' % self +s
+            s = 'On resource:\n\t%s\n' % self +s
             raise ActionException(s)
             
     def f(self, f, **args):

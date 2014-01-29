@@ -14,6 +14,9 @@ class MakeBranch(Action):
         pass
 
     def applicable(self, r):
+        if not r.is_git_repo():
+            return False
+
         return not r.is_right_branch()
         
     def single_action(self, r):

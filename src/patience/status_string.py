@@ -28,7 +28,8 @@ def status2string(r, res):
     
     if not res.present:
         flags[flag_modified] = '!'
-        remarks.append('Dir does not exists')
+        remarks.append('Dir does not exists. '
+                       ' (Should be fixable by "pat checkout".)')
     elif not res.is_git_repo:
         flags[flag_modified] = '!'
         remarks.append('Dir exists but no git repo found.'

@@ -1,7 +1,5 @@
 from patience.action import Action
 from patience.status_string import status2string, StatusResult, status_fields
-from patience.structures import ActionException
-
 
 __all__ = ['Status', 'StatusFull']
 
