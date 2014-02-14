@@ -29,9 +29,12 @@ class StatusBranches(Action):
         counter2 = defaultdict(lambda: 0)
         for r, v in results.items():
             if isinstance(v, Exception):
+                s += '%s: %s\n' % (r, v)
                 # XXX: maybe something else
                 continue
-            
+#             print r
+#             print v
+#             print type(v)
             for b in v.keys():
                 counter[b] += 1
                 counter2[r] += 1

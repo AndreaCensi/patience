@@ -77,7 +77,7 @@ class Action(object):
             try:
                 result = self.single_action(r)
             except ActionException as e:
-                result = 'exception: %s' % e
+                result = e  # 'exception: %s' % e
             except:
                 print('other exception')
                 raise
