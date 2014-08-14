@@ -132,7 +132,7 @@ class Git(Resource):
             display_prefix = '%-30s: ' % self.short_path
             
             if self.show_operations:
-                print(display_prefix + ' %s ' % cmd)
+                print(display_prefix + ' %s ' % str(cmd))
                
             display_prefix = '%-30s  ' % ''
             res = system_cmd_result(cwd, cmd,
@@ -354,7 +354,7 @@ class Git(Resource):
         else:
             return True
     
-    def commit(self):
+    def commit(self, msg=None):
         self.check_right_branch()
         if self.num_modified():
             n = self.num_untracked()
@@ -362,13 +362,13 @@ class Git(Resource):
                 self.badcond("Cannot commit; there are %s untracked files." % n)
             else: 
                 # TODO
-                system_cmd_show(self.destination, 'git status')
-                try:
-                    msg = raw_input('message: ')
-                except Exception as e:
-                    print e
-                    return
-                self.run(self.destination, ['git', 'commit', '-a', '-m', msg])
+                # system_cmd_show(self.destination, 'git status')
+                # try:
+                #     msg = raw_input('message: ')
+                # except Exception as e:
+                #     print(e)
+                #     return
+                self.run(['git', 'commit', '-a', '-m', msg])
     
     def push(self):
         self.check_right_branch()

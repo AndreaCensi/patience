@@ -1,10 +1,10 @@
 #!/usr/bin/env python 
-import sys
+from .logging import error, fatal, info
 import os
+import sys
 import yaml
+from system_cmd.meat import system_cmd_result
 
-from .utils  import system_output
-from .logging import error, info, fatal
 
 RESOURCES = 'resources.yaml'
 
@@ -81,6 +81,9 @@ def main():
 def get_url_branch(git_dir):
     repo = os.path.dirname(git_dir)
     repo = os.path.realpath(repo)
+
+    def system_output(cwd, cmd):
+        return system_cmd_result(cwd, cmd).stdout
 
     remotes = system_output(repo, 'git remote')
     if not 'origin' in remotes.split():

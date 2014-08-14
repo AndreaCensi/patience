@@ -1,12 +1,11 @@
+# 
 from .structures import ActionException
-import sys
 from abc import ABCMeta, abstractmethod
 from contracts.utils import indent
+import sys
 
 
 __all__ = ['Action']
-
-# from contracts import ContractsMeta
 
 
 class Action(object):
@@ -149,12 +148,10 @@ class Action(object):
         s = ''
         for path, res in results.items():
             if isinstance(res, Exception):
-#                 e = str(res).split('\n')[0]
                 s += '{0:<30}:\n{1}\n'.format(path, indent(str(res), '|'))
         return s
         
 # Load actions 
-from . import actions  # @UnusedImport
 
     
 
@@ -177,3 +174,4 @@ def write_console_status(s):
     s = s.ljust(100)  # TODO: add correct lengt
     sys.stderr.write(s + '\r')
     
+from . import actions # @UnusedImport

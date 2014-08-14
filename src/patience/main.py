@@ -26,6 +26,9 @@ def main():
         
     parser.add_option("--yaml", help="Write YAML output", default=False,
                     action='store_true')
+    
+    parser.add_option("-m", help="Commit msg", default='minor', dest='msg')
+
 
     (options, args) = parser.parse_args()  # @UnusedVariable
 
@@ -126,8 +129,8 @@ def main():
          
     elif command == 'commit':
         for r in resources:
-            if r.num_modified() > 0 and  r.num_untracked() == 0:
-                r.commit()
+            if r.num_modified() > 0 and r.num_untracked() == 0:
+                r.commit(msg=options.msg)
     else:
         commands = ", ".join(Action.actions.keys())
         msg = 'Unknown command %r. Use one of: %s' % (command, commands)

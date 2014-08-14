@@ -1,7 +1,7 @@
 from .git import Git
 from .resources import Resource
 from .structures import ConfigException
-from .subversion import Subversion
+# from .subversion import Subversion
 import os
 import yaml
 
@@ -44,9 +44,9 @@ def instantiate(config, base_dir='.'):
             raise ConfigException('Could not guess type from url', config)
     
     res_type = config['type']
-    if res_type == 'subversion':
-        return Subversion(config)
-    elif res_type == 'git':
+#     if res_type == 'subversion':
+#         return Subversion(config)
+    if res_type == 'git':
         return Git(config)
     elif res_type == 'included':
         return Resource(config)
