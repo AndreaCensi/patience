@@ -1,4 +1,5 @@
 from patience.action import Action
+from patience.utils.coloredterm import termcolor_colored
 
 
 __all__ = ['StatusBranches']
@@ -23,6 +24,9 @@ class StatusBranches(Action):
         return r.list_differences_with_remote_branches()
         
     def summary(self, resources, results):  # @UnusedVariable
+        
+        only_show_ahead = False
+        only_show_ahead = True
         s = ""
         from collections import defaultdict
         counter = defaultdict(lambda: 0)
@@ -61,7 +65,7 @@ class StatusBranches(Action):
 #         branches_rest = set(branches) - branches_ahead - branches_behind
 #         print('Rest: %s' % branches_rest)
         
-        if False:
+        if only_show_ahead:
             print('Showing only branches ahead.')
             branches_to_show = sorted(branches_ahead, key=branches_sorter)
         else:
@@ -88,7 +92,11 @@ class StatusBranches(Action):
                         if nmerge:
                             if npush:
                                 cell += ' '
-                            cell += 'M%d' % nmerge
+                            
+                            cell_m = 'M%d' % nmerge
+                            cell_m = termcolor_colored(cell_m, color='magenta')
+                            
+                            cell += cell_m 
                             if not simple_merge:
                                 cell += '!'
                     else: 

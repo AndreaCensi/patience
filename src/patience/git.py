@@ -1,11 +1,8 @@
-import os
-
-from contracts import contract
-from system_cmd import system_cmd_result, system_cmd_show, CmdException
-
 from .resources import Resource
 from .structures import ActionException
-
+from contracts import contract
+from system_cmd import CmdException, system_cmd_result
+import os
 
 __all__ = ['Git']
 
