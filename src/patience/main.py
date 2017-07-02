@@ -1,9 +1,10 @@
+from contracts import contract
 import datetime
 import platform
 import sys
-from contracts import contract
-from .structures import UserError
 
+from .structures import UserError
+from .configuration import find_configuration, load_resources
 
 def main():
     from optparse import OptionParser
@@ -32,7 +33,7 @@ def main():
 
     (options, args) = parser.parse_args()  # @UnusedVariable
 
-    from .configuration import find_configuration, load_resources
+    
 
     if options.config:
         configs = [options.config]

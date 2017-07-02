@@ -1,10 +1,11 @@
-#!/usr/bin/env python 
-from .logging import error, fatal, info
 import os
 import sys
-import yaml
-from system_cmd.meat import system_cmd_result
 
+from system_cmd.meat import system_cmd_result
+import yaml
+
+from . import logger
+from .configuration import find_configuration, load_resources
 
 RESOURCES = 'resources.yaml'
 
@@ -13,10 +14,22 @@ def main():
         dirname = '.'
     else:
         dirname = sys.argv[1]
-
+    
+    # check to see if there is already a resources.yaml
+    fn = os.path.join(dirname, RESOURCES)
+    found = {}
+    if os.path.exists(fn):
+        logger.info('Loading known repos from %r' % fn)
+        
+        for r in load_resources(fn):
+            d = os.path.realpath(r.destination)
+            found[d] = r 
+        
     output = os.path.join(dirname, RESOURCES)
     if os.path.exists(output):
-        raise Exception('Output file %s already exist.' % output)
+        logger.warning('Output file %s already exist.' % output)
+        output = output + '.search_output'
+        logger.warning('Using %s instead.' % output)
     
     cols = 80
     
@@ -24,12 +37,17 @@ def main():
         return s.ljust(cols)[:cols]
     
     repolist = []
-    
+    repodirs = set()
     def append(r):
         if 'sub' in r:
-            info(format_string("Found sub in: %s" % repo))
+            logger.info(format_string("Found sub in: %s" % repo))
         elif 'dir' in r:
-            info(format_string('Found git in: %s' % repo))
+            d = os.path.realpath(r['dir'])
+            if d in repodirs:
+                return
+            else:
+                repodirs.add(d)
+            logger.info(format_string('Found git in: %s' % repo))
         repolist.append(r)
         
     def consider(repo):
@@ -40,7 +58,7 @@ def main():
             git_dir = repo
             destination = os.path.relpath(os.path.dirname(git_dir), dirname)
             found = {'dir': destination}
-            info('Found git in: %s' % found['dir'])
+            logger.info('Found git in: %s' % found['dir'])
                 
             try:
                 url, branch = get_url_branch(git_dir)
@@ -50,7 +68,7 @@ def main():
                 if not 'git' in found['url']:
                     found['type'] = 'git'
             except Exception as e:
-                error('Could not locate url for %r: %s' % (git_dir, e))
+                logger.error('Could not locate url for %r: %s' % (git_dir, e))
                 
             append(found)
     
@@ -66,16 +84,27 @@ def main():
         sys.stderr.write(format_string('%s %5d %s' % (mark(), mark.count, s)))
         sys.stderr.write('\r')
    
-    for repo in find_repos(dirname, log=log, shallow=True):
+    shallow = False
+    for repo in find_repos(dirname, log=log, shallow=shallow):
         consider(repo)
    
     if len(repolist) == 0:
-        fatal('No repos found in %r.' % dirname)
+        logger.fatal('No repos found in %r.' % dirname)
  
     with open(output, 'w') as f:
         for repo in repolist:
-            f.write('---\n')
-            yaml.dump(repo, f, default_flow_style=False)
+            if 'dir' in repo:
+                d = os.path.realpath(repo['dir'])
+                if d in found:
+                    logger.info('Ignoring repo %s, already known.' % d)
+                    ok =False
+                else:
+                    ok = True
+            else:
+                ok = True
+            if ok:
+                f.write('---\n')
+                yaml.dump(repo, f, default_flow_style=False)
  
 
 def get_url_branch(git_dir):

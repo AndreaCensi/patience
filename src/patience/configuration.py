@@ -99,7 +99,7 @@ def find_configuration(dirname=os.path.curdir):
 
 def load_resources(filename, errors=[]):
     basename = os.path.basename(filename)
-    if 'resources.yaml' in basename:
+    if 'resources.yaml' == basename:
         # print('loading %r' % filename)
         for x in load_resources_patience(filename, errors):
             yield x
