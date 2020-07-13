@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+install_requires=['pyyaml', 'SystemCmd-z6', 'PyContracts3']
 
 setup(name='patience',
       author="Andrea Censi",
@@ -9,14 +10,14 @@ setup(name='patience',
       description="A command line tool for managing multiple git repositories.",
       package_dir={'':'src'},
       packages=find_packages('src'),
-      install_requires=['pyyaml', 'SystemCmd', 'PyContracts'],
+      install_requires=install_requires,
       entry_points={
          'console_scripts': [
            'patience = patience.main:main',
            'patience_search = patience.patience_search:main',
            'pat = patience.main:main',
            'patience2html = patience.patience2html:main'
-        ]  
+        ]
       },
 )
 
