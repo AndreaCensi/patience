@@ -1,4 +1,3 @@
-
 from . import checkout
 from . import develop
 from . import fetch
@@ -10,7 +9,7 @@ from . import status
 from . import unittests
 
 from . import branches
- 
+
 from . import status_branches
 
 from . import fix_upstream

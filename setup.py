@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-install_requires = ["pyyaml", "SystemCmd-z7", "PyContracts3"]
+install_requires = ["PyYAML", "SystemCmd-z7", "PyContracts3"]
 
 setup(
     name="patience",

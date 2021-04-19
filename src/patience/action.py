@@ -1,74 +1,81 @@
-# 
+#
 from .structures import ActionException
 from abc import ABCMeta, abstractmethod
 from contracts.utils import indent
 import sys
 
 
-__all__ = ['Action']
+__all__ = ["Action"]
 
 
 class Action(object):
-    
+
     __metaclass__ = ABCMeta
 
-    def single_action_started(self, resource): 
+    def single_action_started(self, resource):
         pass
-    
+
     def result_display_start(self):
         return None
-    
+
     @abstractmethod
-    def single_action_result_display(self, resource, result): 
+    def single_action_result_display(self, resource, result):
         pass
 
     @abstractmethod
     def single_action(self, r):
         pass
-    
+
     def applicable(self, r):  # @UnusedVariable
         """ Return True if it is applicable to this resource. """
         return True
-    
+
     actions = {}
-    
+
     def __init__(self, parallel=True, any_order=False):
         self.parallel = parallel
         self.any_order = any_order
-        
+
     def filter_applicable(self, resources):
         """ Returns the resoruces for which this action is applicable. """
         return filter(self.applicable, resources)
-        
-    def go(self, resources, force_sequential=False,
-                 max_processes=3, stream=sys.stdout,
-                 console_status=False,
-                 show_operations=False,
-                 show_stdout=False):
-        
+
+    def go(
+        self,
+        resources,
+        force_sequential=False,
+        max_processes=3,
+        stream=sys.stdout,
+        console_status=False,
+        show_operations=False,
+        show_stdout=False,
+    ):
+
         s = self.result_display_start()
-        if s is not None:            
+        if s is not None:
             if stream:
                 stream.write(s)
-  
+
         resources = self.filter_applicable(resources)
-         
+
         for r in resources:
             r.show_operations = show_operations
-            r.show_stdout = show_stdout 
-            
+            r.show_stdout = show_stdout
+
         if not self.parallel or force_sequential:
-            return self._go_sequential(resources, stream,
-                     console_status=console_status)
+            return self._go_sequential(resources, stream, console_status=console_status)
         else:
-            return self._go_parallel(resources, stream,
-                    any_order=self.any_order,
-                    max_processes=max_processes,
-                    console_status=console_status)
-    
+            return self._go_parallel(
+                resources,
+                stream,
+                any_order=self.any_order,
+                max_processes=max_processes,
+                console_status=console_status,
+            )
+
     def _go_sequential(self, resources, stream, console_status):
         results = {}
-        for i, r in enumerate(resources): 
+        for i, r in enumerate(resources):
 
             if console_status:
                 write_console_status("%3d/%d %s" % (i + 1, len(resources), r))
@@ -78,7 +85,7 @@ class Action(object):
             except ActionException as e:
                 result = e  # 'exception: %s' % e
             except:
-                print('other exception')
+                print("other exception")
                 raise
 
             if stream:
@@ -86,23 +93,22 @@ class Action(object):
                 write_message(stream, r, m2)
 
             results[r.short_path] = result
-            
+
         if stream:
             m3 = self.summary(resources, results)
-            if m3: 
-                stream.write('%s\n' % m3)
-    
-        return results
-    
+            if m3:
+                stream.write("%s\n" % m3)
 
-    def _go_parallel(self, resources, stream, any_order, max_processes,
-        console_status):
+        return results
+
+    def _go_parallel(self, resources, stream, any_order, max_processes, console_status):
 
         from multiprocessing import Pool, TimeoutError
-        pool = Pool(processes=max_processes)            
-        
+
+        pool = Pool(processes=max_processes)
+
         handles = {}
-        for r in resources: 
+        for r in resources:
             handles[r] = pool.apply_async(slave, [(self, r)])
 
         results = {}
@@ -114,8 +120,9 @@ class Action(object):
             # print(" r2message: %d" % len(r2messages))
             # print(" results:  %d" % len(results))
             if console_status:
-                sys.stderr.write("%3d to go (%3d to write %d)      \r" % 
-                (len(handles), len(r2messages), len(to_write)))
+                sys.stderr.write(
+                    "%3d to go (%3d to write %d)      \r" % (len(handles), len(r2messages), len(to_write))
+                )
             for r, res in list(handles.items()):
                 try:
                     results[r] = res.get(timeout=0.05)
@@ -123,9 +130,9 @@ class Action(object):
                     continue
                 except ActionException as e:
                     results[r] = e
-            
+
                 del handles[r]
-                    
+
                 m2 = self.single_action_result_display(r, results[r])
                 if any_order:
                     write_message(stream, r, m2)
@@ -138,40 +145,41 @@ class Action(object):
                 m = r2messages[r]
                 del r2messages[r]
                 write_message(stream, r, m)
-                
+
         if stream:
             m3 = self.summary(resources, results)
             if m3:
-                stream.write('%s\n' % m3)
+                stream.write("%s\n" % m3)
 
     def summary(self, resources, results):  # @UnusedVariable
-        s = ''
+        s = ""
         for path, res in results.items():
             if isinstance(res, Exception):
-                s += '{0:<30}:\n{1}\n'.format(path, indent(str(res), '|'))
+                s += "{0:<30}:\n{1}\n".format(path, indent(str(res), "|"))
         return s
-        
-# Load actions 
 
-    
+
+# Load actions
 
 
 def slave(task):
     action, resource = task
     return action.single_action(resource)
-    
-    
+
+
 def write_message(stream, r, m):
-    if not m: 
+    if not m:
         return
-    name = '%s' % r
+    name = "%s" % r
     if name in m:
-        stream.write('%s\n' % m)
+        stream.write("%s\n" % m)
     else:
-        stream.write('%s: %s\n' % (name, m))
-        
+        stream.write("%s: %s\n" % (name, m))
+
+
 def write_console_status(s):
     s = s.ljust(100)  # TODO: add correct lengt
-    sys.stderr.write(s + '\r')
-    
-from . import actions # @UnusedImport
+    sys.stderr.write(s + "\r")
+
+
+from . import actions  # @UnusedImport

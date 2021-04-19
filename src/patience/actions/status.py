@@ -1,12 +1,11 @@
 from patience.action import Action
 from patience.status_string import status2string, StatusResult, status_fields
 
-__all__ = ['Status', 'StatusFull']
+__all__ = ["Status", "StatusFull"]
 
 
 class Status(Action):
-    
-    def __init__(self): 
+    def __init__(self):
         Action.__init__(self, parallel=True, any_order=False)
 
     def single_action_starting(self, resource):  # @UnusedVariable
@@ -21,7 +20,7 @@ modified  |     |    pushes     _branch status
     def single_action_result_display(self, resource, result):
         if not isinstance(result, Exception):
             return status2string(resource, result)
-    
+
     def single_action(self, r):
         branch = r.branch
         url = r.url
@@ -49,7 +48,7 @@ modified  |     |    pushes     _branch status
         else:
             is_git_repo = True
             present = True
-            
+
             if not r.has_remote():
                 has_remote = False
             else:
@@ -57,28 +56,28 @@ modified  |     |    pushes     _branch status
                 current_url = r.get_remote_url()
 
             track = r.get_what_tracks(branch)  # XXX
-                
+
             if current_url != url:
                 pass
             else:
                 remote_branch_exists = r.branch_exists_remote()
-               
+
                 current_branch = r.current_branch()
                 branch_mismatch = branch != current_branch
                 local_branch_exists = r.branch_exists_local()
-                
+
                 if branch == current_branch:
                     track = r.get_what_tracks(branch)
                     to_push = r.something_to_push()
                     to_merge = r.something_to_merge()
 
-                    if to_merge: 
+                    if to_merge:
                         simple_merge = r.simple_merge()
-                    else: 
+                    else:
                         simple_merge = None
-                    if to_push: 
+                    if to_push:
                         simple_push = r.simple_push()
-                    else: 
+                    else:
                         simple_push = None
                 else:
                     to_push = None
@@ -89,9 +88,11 @@ modified  |     |    pushes     _branch status
 
             num_modified = r.num_modified()
             num_untracked = r.num_untracked()
-            
+
         asdict = dict([(k, locals()[k]) for k in status_fields])
         return StatusResult(**asdict)
+
+
 #
 #     def summary(self, resources, results):
 #         for resource, result in zip(resources, results):
@@ -99,19 +100,16 @@ modified  |     |    pushes     _branch status
 #                 print(result)
 
 
-Action.actions['status'] = Status()
+Action.actions["status"] = Status()
 
 
 class StatusFull(Status):
-    
-
     def single_action_result_display(self, resource, result):
         if not isinstance(result, Exception):
             return status2string(resource, result)
         else:
 
-            return 'Error: ' + str(result)  # XXX
+            return "Error: " + str(result)  # XXX
 
 
-Action.actions['status-full'] = StatusFull()
-
+Action.actions["status-full"] = StatusFull()

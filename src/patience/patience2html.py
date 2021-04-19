@@ -1,14 +1,15 @@
-
 import yaml
 import sys
 
+
 def main():
-    
+
     data = yaml.load(sys.stdin)
-    
+
     f = sys.stdout
-    
-    f.write("""
+
+    f.write(
+        """
     
 <html><head><title>Patience results</title>
     
@@ -41,14 +42,16 @@ def main():
 </head>
 <body>
     
-""")
-    
-    assert data['command'] == 'status'
-    
-    d = str(data['date'])[:16]
-    ts = """ %s @ %s """ % (data['hostname'], d)
-    
-    f.write("""<table>
+"""
+    )
+
+    assert data["command"] == "status"
+
+    d = str(data["date"])[:16]
+    ts = """ %s @ %s """ % (data["hostname"], d)
+
+    f.write(
+        """<table>
     
         <tr class='header'>
             <td> %s</td>
@@ -58,13 +61,14 @@ def main():
             <td> merge </td>
             <td> notes </td>
         </tr>
-    """ % ts)
-    for r in data['resources']:
+    """
+        % ts
+    )
+    for r in data["resources"]:
         # if not isinstance(status, patience.action.StatusResult):
 
-
         short_path = r.short_path
-        status = data['results'][short_path]
+        status = data["results"][short_path]
         t = """
         <tr class="{tr_class}">
             <td class="name">{name}</td>
@@ -81,64 +85,65 @@ def main():
                 return "<span class='some'>%s</span>" % x
             else:
                 return "<span class='zero'>%s</span>" % x
-    
+
         classes = ["resource"]
-        
+
         if isinstance(status, Exception):
-            classes.append('exception') 
-            invalid = '-'
-            s = t.format(name=short_path,
-                        num_modified=invalid,
-                        num_untracked=invalid,
-                        to_push=invalid,
-                        to_merge=invalid,
-                        tr_class=" ".join(classes),
-                        notes='%s' % status)
+            classes.append("exception")
+            invalid = "-"
+            s = t.format(
+                name=short_path,
+                num_modified=invalid,
+                num_untracked=invalid,
+                to_push=invalid,
+                to_merge=invalid,
+                tr_class=" ".join(classes),
+                notes="%s" % status,
+            )
 
         else:
             if not status.present:
-                classes.append('missing')
+                classes.append("missing")
             else:
                 if status.num_modified:
-                    classes.append('some_modified')
-                else: 
-                    classes.append('not_modified')
-            
-                if status.num_untracked: 
-                    classes.append('some_untracked')
-                else: 
-                    classes.append('not_untracked')
-                
-                if status.to_merge: 
-                    classes.append('some_to_merge')
-                else: 
-                    classes.append('not_to_merge')
+                    classes.append("some_modified")
+                else:
+                    classes.append("not_modified")
 
-                if status.to_push: 
-                    classes.append('some_to_push')
-                else: 
-                    classes.append('not_to_push')
-            
-                if not (status.num_modified or 
-                    status.num_untracked or
-                    status.to_merge or 
-                    status.to_push): 
-                    classes.append('clean')
+                if status.num_untracked:
+                    classes.append("some_untracked")
+                else:
+                    classes.append("not_untracked")
 
-                
-            s = t.format(name=short_path,
-                        num_modified=wrap(status.num_modified),
-                        num_untracked=wrap(status.num_untracked),
-                        to_push=wrap(status.to_push),
-                        to_merge=wrap(status.to_merge),
-                        tr_class=" ".join(classes),
-                        notes="")
-        
+                if status.to_merge:
+                    classes.append("some_to_merge")
+                else:
+                    classes.append("not_to_merge")
+
+                if status.to_push:
+                    classes.append("some_to_push")
+                else:
+                    classes.append("not_to_push")
+
+                if not (status.num_modified or status.num_untracked or status.to_merge or status.to_push):
+                    classes.append("clean")
+
+            s = t.format(
+                name=short_path,
+                num_modified=wrap(status.num_modified),
+                num_untracked=wrap(status.num_untracked),
+                to_push=wrap(status.to_push),
+                to_merge=wrap(status.to_merge),
+                tr_class=" ".join(classes),
+                notes="",
+            )
+
         f.write(s)
-        
-    f.write('</table>\n')
+
+    f.write("</table>\n")
 
     f.write("""</body></html>""")
-    
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     main()
